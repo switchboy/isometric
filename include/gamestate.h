@@ -45,11 +45,13 @@ public:
     sf::Sprite  spriteSelectedTile,spriteSelectedTileForPath, spriteEmptyTile, spriteGrassTile, spriteSandTile, spriteSandTileNE,
     spriteSandTileNW,spriteSandTileSE,spriteSandTileSW, spriteCactusTile, spriteCypressTrileTile,
     spriteNormalTreeTile, spritePineTreeTile, spriteTileObstructed, spriteTownCenter,
+    spriteStone, spriteGold, spriteBerryBush,
     spriteWaterTile, spriteBeachTileNE, spriteBeachTileNW,spriteBeachTileSE,spriteBeachTileSW, spriteBuildingHouse, spriteVillager;
 
     sf::Texture textureSelectedTile, textureSelectedTileForPath, textureEmptyTile, textureGrassTile, textureSandTile, textureSandTileNE,
     textureSandTileNW,textureSandTileSE,textureSandTileSW, textureCactusTile, textureCypressTrileTile,
     textureNormalTreeTile, texturePineTreeTile, textureCheatTile, textureTileObstructed, textureTownCenter,
+    textureStone, textureGold, textureBerryBush,
     textureWaterTile, textureBeachTileNE, textureBeachTileNW,textureBeachTileSE, textureBeachTileSW, textureBuildingHouse, textureVillager;
     int currentMap[MAP_WIDTH][MAP_HEIGHT];
     int buildingLocationList[MAP_WIDTH][MAP_HEIGHT];

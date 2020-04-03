@@ -171,6 +171,33 @@ void gameState::drawMap()
 
 void gameState::loadTextures()
 {
+    if(textureStone.loadFromFile("textures/stone.png"))
+    {
+        spriteStone.setTexture(textureStone);
+        spriteStone.setOrigin(0,2);
+    }
+    else
+    {
+        std::cout << "Error loading texture: stone.png \n" << std::endl;
+    }
+    if(textureGold.loadFromFile("textures/gold.png"))
+    {
+        spriteGold.setTexture(textureGold);
+        spriteGold.setOrigin(0,2);
+    }
+    else
+    {
+        std::cout << "Error loading texture: gold.png \n" << std::endl;
+    }
+    if(textureBerryBush.loadFromFile("textures/berrybush.png"))
+    {
+        spriteBerryBush.setTexture(textureBerryBush);
+        spriteBerryBush.setOrigin(0,2);
+    }
+    else
+    {
+        std::cout << "Error loading texture: berrybush.png \n" << std::endl;
+    }
     if(textureTileObstructed.loadFromFile("textures/tileObstructed.png"))
     {
         spriteTileObstructed.setTexture(textureTileObstructed);
@@ -762,7 +789,7 @@ void gameState::interact()
         else if(this->isPressedO)
         {
             this->objectTypeSelected += 1;
-            if(this->objectTypeSelected > 3)
+            if(this->objectTypeSelected > 6)
             {
                 this->objectTypeSelected = 0;
             }

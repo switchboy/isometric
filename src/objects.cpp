@@ -9,14 +9,51 @@ objects::objects(int type, int startXlocation, int startYLocation, int objectId)
     this->locationX = startXlocation;
     this->locationY = startYLocation;
     this->objectId =objectId;
-    this->typeOfResource = 0;
-    if(this->typeOfResource == 0){
+    switch(type)
+    {
+    case 0:
+        this->typeOfResource = 0;
+        break;
+    case 1:
+        this->typeOfResource = 0;
+        break;
+    case 2:
+        this->typeOfResource = 0;
+        break;
+    case 3:
+        this->typeOfResource = 0;
+        break;
+    case 4:
+        this->typeOfResource = 2;
+        break;
+    case 5:
+        this->typeOfResource = 3;
+        break;
+    case 6:
+        this->typeOfResource = 1;
+        break;
+    }
+
+    switch(this->typeOfResource)
+    {
+    case 0:
         this->resourceLeft = 200;
+        break;
+    case 1:
+        this->resourceLeft = 500;
+        break;
+    case 2:
+        this->resourceLeft = 2000;
+        break;
+    case 3:
+        this->resourceLeft = 1500;
+        break;
     }
     currentGame.objectLocationList[startXlocation][startYLocation] = objectId;
 }
 
-void objects::substractResource(){
+void objects::substractResource()
+{
     this->resourceLeft -= 1;
 }
 
@@ -50,11 +87,26 @@ void objects::drawObjectSprite(int spriteNumber, int i, int j)
         currentGame.spritePineTreeTile.setPosition(worldSpace(i,j,true), worldSpace(i,j,false));
         window.draw(currentGame.spritePineTreeTile);
         break;
+
+    case 4:
+        currentGame.spriteStone.setPosition(worldSpace(i,j,true), worldSpace(i,j,false));
+        window.draw(currentGame.spriteStone);
+        break;
+    case 5:
+        currentGame.spriteGold.setPosition(worldSpace(i,j,true), worldSpace(i,j,false));
+        window.draw(currentGame.spriteGold);
+        break;
+    case 6:
+        currentGame.spriteBerryBush.setPosition(worldSpace(i,j,true), worldSpace(i,j,false));
+        window.draw(currentGame.spriteBerryBush);
+        break;
     }
 }
 
-void objects::update(){
-    if(resourceLeft < 0){
+void objects::update()
+{
+    if(resourceLeft < 0)
+    {
         currentGame.objectLocationList[this->locationX][this->locationY] = -1;
     }
 }

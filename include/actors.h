@@ -110,6 +110,7 @@ class actors
         bool noPathPossible;
         bool forwardIsDone;
         int collisionCell;
+        bool routeNeedsPath;
         std::vector<int> mapArray;
         std::vector<int> mapArrayBack;
         nearestBuildingTile dropOffTile;

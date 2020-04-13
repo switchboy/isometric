@@ -4,6 +4,7 @@
 #include "buildings.h"
 #include <iostream>
 #include <future>
+#include <mutex>
 
 void updateCells(int goalX, int goalY, std::vector<Cells>& cellsList)
 {
@@ -481,7 +482,7 @@ void actors::update()
         this->retries = 0;
         if(this->waitForAmountOfFrames == 0)
         {
-            this->calculateRoute();
+            this->routeNeedsPath = true;
             this->goalNeedsUpdate = false;
         }
         else
@@ -551,7 +552,7 @@ void actors::update()
                             //there is a problem; do nothing this frame but calculate an alternative route!
                             this->actorGoal[0] = this->route.front().positionX;
                             this->actorGoal[1] = this->route.front().positionY;
-                            this->calculateRoute();
+                            this->routeNeedsPath = true;
                             this->retries += +1;
                             this->timeLastAttempt = currentGame.elapsedTime;
                         }
@@ -916,7 +917,7 @@ void actors::update()
         }
         if(commonGoal && !pathFound && retries < 6 && currentGame.elapsedTime-this->timeLastAttempt > 1)
         {
-            this->calculateRoute();
+            this->routeNeedsPath = true;
             this->retries += +1;
             this->timeLastAttempt = currentGame.elapsedTime;
         }
@@ -979,31 +980,36 @@ nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
 
 void actors::calculateRoute()
 {
-    this->noPathPossible = false;
-    this->forwardIsDone = false;
-    this->collisionCell = -1;
-    this->mapArray.reserve(MAP_HEIGHT*MAP_WIDTH);
-    this->mapArrayBack.reserve(MAP_HEIGHT*MAP_WIDTH);
-    for(int i = 0; i < MAP_HEIGHT*MAP_WIDTH; i++)
-    {
-        this->mapArray[i] = 0;
-        this->mapArrayBack[i] = 0;
-    }
-    std::thread pathfinding(&actors::pathAStar, &listOfActors[this->actorId], false);
-    //std::thread pathfindingBackwards(&actors::pathAStar, &listOfActors[this->actorId], true);
-    if(canTargetBeReached())
-    {
-        pathfinding.join();
-        //pathfindingBackwards.join();
-    }
-    else
-    {
-        this->noPathPossible = true;
-        pathfinding.join();
-        //pathfindingBackwards.join();
+    if(this->routeNeedsPath){
+        this->noPathPossible = false;
+        this->forwardIsDone = false;
+        this->collisionCell = -1;
+        this->mapArray.reserve(MAP_HEIGHT*MAP_WIDTH);
+        this->mapArrayBack.reserve(MAP_HEIGHT*MAP_WIDTH);
+        for(int i = 0; i < MAP_HEIGHT*MAP_WIDTH; i++)
+        {
+            this->mapArray[i] = 0;
+            this->mapArrayBack[i] = 0;
+        }
+        std::thread pathfinding(&actors::pathAStar, &listOfActors[this->actorId], false);
+        //std::thread pathfindingBackwards(&actors::pathAStar, &listOfActors[this->actorId], true);
+        if(canTargetBeReached())
+        {
+            pathfinding.join();
+            //pathfindingBackwards.join();
+        }
+        else
+        {
+            this->noPathPossible = true;
+            pathfinding.join();
+            //pathfindingBackwards.join();
+        }
+        this->routeNeedsPath = false;
     }
 }
 
+
+std::mutex mtx;
 
 void actors::pathAStar(bool backward)
 {
@@ -1092,6 +1098,7 @@ void actors::pathAStar(bool backward)
                         cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
                         cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
                         cellsList[newCellId].visited = true;
+                        while(!mtx.try_lock()){}
                         if(backward)
                         {
                             if(this->mapArray[newCellId] == 1)
@@ -1102,6 +1109,7 @@ void actors::pathAStar(bool backward)
                             else
                             {
                                 this->mapArrayBack[newCellId] = 1;
+
                             }
                         }
                         else
@@ -1116,6 +1124,7 @@ void actors::pathAStar(bool backward)
                                 this->mapArray[newCellId] = 1;
                             }
                         }
+                        mtx.unlock();
                     }
                     else
                     {
@@ -1140,6 +1149,7 @@ void actors::pathAStar(bool backward)
     //Zet de te lopen route in een lijst
     if(!backward)
     {
+        while(!mtx.try_lock()){}
         this->route.clear();
         if(this->collisionCell == -1)
         {
@@ -1148,7 +1158,6 @@ void actors::pathAStar(bool backward)
         else
         {
             this->route.push_back({cellsList[collisionCell].positionX, cellsList[collisionCell].positionY, cellsList[collisionCell].visited, cellsList[collisionCell].parentCellId});
-            this->forwardIsDone = true;
         }
         if(this->pathFound)
         {
@@ -1169,13 +1178,13 @@ void actors::pathAStar(bool backward)
                 }
             }
         }
+        this->forwardIsDone = true;
+        mtx.unlock();
     }
     else if(this->pathFound && this->collisionCell != -1)
     {
-        while(!this->forwardIsDone)
-        {
-            //wait
-        }
+        while(!this->forwardIsDone){ }
+        while(!mtx.try_lock()){}
         while(!endReached)
         {
             if(route.front().visited == true)
@@ -1192,6 +1201,7 @@ void actors::pathAStar(bool backward)
                 endReached = true;
             }
         }
+        mtx.unlock();
     }
 }
 

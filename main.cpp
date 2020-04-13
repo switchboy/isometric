@@ -22,7 +22,12 @@ void updateObjectHelper(int i)
     listOfObjects[i].update();
 }
 
-void updateActors()
+void routeHelper(int i)
+{
+    listOfActors[i].calculateRoute();
+}
+
+void updateActorsWorker()
 {
     while(window.isOpen())
     {
@@ -35,7 +40,7 @@ void updateActors()
         }
     }
 }
-void updateObjects()
+void updateObjectsWorker()
 {
     while(window.isOpen())
     {
@@ -49,18 +54,32 @@ void updateObjects()
     }
 }
 
+void calculateRoutesWorker()
+{
+    while(window.isOpen())
+    {
+        if(!listOfActors.empty())
+        {
+            for(int i = 0; i < listOfActors.size(); i++)
+            {
+                std::async(std::launch::async, routeHelper, i);
+            }
+        }
+    }
+}
+
 int main()
 {
     sf::Clock clockMain;
     currentGame.loadGame();
-    std::thread updateActorsThread(updateActors);
-    std::thread updateObjectsThread(updateObjects);
+    std::thread updateActorsThread(updateActorsWorker);
+    std::thread updateObjectsThread(updateObjectsWorker);
+    std::thread updateRoutesThread(calculateRoutesWorker);
     while(window.isOpen())
     {
         sf::Time elapsedMain = clockMain.getElapsedTime();
         currentGame.elapsedTime = elapsedMain.asSeconds();
         currentGame.interact();
-
         currentGame.drawGame();
     }
     return 0;

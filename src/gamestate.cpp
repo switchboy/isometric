@@ -5,6 +5,7 @@
 #include "player.h"
 #include <iostream>
 #include <sstream>
+#include <future>
 
 void gameState::drawMousePosition(int x,int y, int noProblem)
 {
@@ -884,23 +885,14 @@ void gameState::drawMouseInteraction()
     }
 }
 
+
+
+
 void gameState::update()
 {
-    if(!listOfActors.empty())
-    {
-        for(int i = 0; i < listOfActors.size(); i++)
-        {
-            listOfActors[i].update();
-        }
-    }
-    if(!listOfObjects.empty()){
-        for(int i = 0; i < listOfObjects.size(); i++)
-        {
-            listOfObjects[i].update();
-        }
-    }
 
 }
+
 
 mouseWorldCord gameState::getNextCord(int x, int y)
 {

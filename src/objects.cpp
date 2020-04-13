@@ -12,7 +12,7 @@ objects::objects(int type, int startXlocation, int startYLocation, int objectId)
     switch(type)
     {
     case 0:
-        this->typeOfResource = 0;
+        this->typeOfResource = 0; //wood
         break;
     case 1:
         this->typeOfResource = 0;
@@ -24,13 +24,13 @@ objects::objects(int type, int startXlocation, int startYLocation, int objectId)
         this->typeOfResource = 0;
         break;
     case 4:
-        this->typeOfResource = 2;
+        this->typeOfResource = 2;//stone
         break;
     case 5:
-        this->typeOfResource = 3;
+        this->typeOfResource = 3;//gold
         break;
     case 6:
-        this->typeOfResource = 1;
+        this->typeOfResource = 1; //food
         break;
     }
 

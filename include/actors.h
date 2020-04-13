@@ -3,19 +3,17 @@
 #include <cmath>
 #include <list>
 #include "gamestate.h"
+#include <SFML/System.hpp>
+#include <thread>
 
 
-class Cells{
-    public:
+struct Cells{
         int positionX, positionY, parentCellId, cummulativeCost, cellId;
         double costToGoal, totalCostGuess;
         bool visited = false;
         bool obstacle = false;
-        std::list<int> neighbours;
-        void updateCells(int goalX, int goalY);
+        int neighbours[8];
 };
-
-extern Cells cellsList[MAP_HEIGHT*MAP_WIDTH];
 
 struct nearestBuildingTile
 {
@@ -24,6 +22,23 @@ struct nearestBuildingTile
     int locationY;
     int buildingId;
     bool isSet;
+};
+
+struct islandCell
+{
+    int positionX;
+    int positionY;
+    int cellId;
+    int cellScore;
+    int parentId;
+};
+
+struct routeCell
+{
+    int positionX;
+    int positionY;
+    int visited;
+    int parentCellId;
 };
 
 class actors
@@ -39,7 +54,11 @@ class actors
         void renderPath();
         void setCommonGoalTrue();
         void setGatheringRecource(bool flag);
+        bool canTargetBeReached();
         nearestBuildingTile findNearestDropOffPoint(int Resource);
+        void pathAStar(bool backward);
+
+
 
     private:
         int actorType;
@@ -88,8 +107,15 @@ class actors
         bool isBackAtOwnSquare;
         float offSetX;
         float offSetY;
+        bool noPathPossible;
+        bool forwardIsDone;
+        int collisionCell;
+        std::vector<int> mapArray;
+        std::vector<int> mapArrayBack;
         nearestBuildingTile dropOffTile;
-        std::list<Cells> route;
+        std::list<routeCell> route;
+
+
 
 };
 

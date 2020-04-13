@@ -3,11 +3,11 @@
 #include "player.h"
 #include "buildings.h"
 #include <iostream>
+#include <future>
 
-Cells cellsList[MAP_HEIGHT*MAP_WIDTH];
-
-void Cells::updateCells(int goalX, int goalY)
+void updateCells(int goalX, int goalY, std::vector<Cells>& cellsList)
 {
+    int goalId = (goalX*MAP_HEIGHT)+goalY;
     int n = 0;
     for(int i = 0; i < MAP_WIDTH; i++)
     {
@@ -15,7 +15,7 @@ void Cells::updateCells(int goalX, int goalY)
         {
             cellsList[n].positionX = i;
             cellsList[n].positionY = j;
-            if(n == (goalX*MAP_HEIGHT)+goalY)
+            if(n == goalId)
             {
                 cellsList[n].obstacle = false;
             }
@@ -32,118 +32,286 @@ void Cells::updateCells(int goalX, int goalY)
             cellsList[n].parentCellId = NULL;
             cellsList[n].cummulativeCost = NULL;
             cellsList[n].totalCostGuess = NULL;
-            cellsList[n].neighbours.clear();
+            for(int q = 0; q <8; q++)
+            {
+                cellsList[n].neighbours[q] = -1;
+            }
             cellsList[n].cellId = n;
             n++;
         }
     }
+}
 
-    for(int i = 0; i < (MAP_HEIGHT*MAP_WIDTH) ; i++)
+
+void addNeighbours(int& i, std::vector<Cells>& cellsList)
+{
+    if(cellsList[i].positionX > 0)
     {
-        if(cellsList[i].positionX > 0)
+        //de cell links kan toegevoegd worden
+        if(!cellsList[i-MAP_HEIGHT].obstacle)
         {
-            //de cell links kan toegevoegd worden
-            if(!cellsList[i-MAP_HEIGHT].obstacle)
-            {
-                cellsList[i].neighbours.push_back(i-MAP_HEIGHT);
-            }
+            cellsList[i].neighbours[0] = i-MAP_HEIGHT;
         }
-        if(cellsList[i].positionX < MAP_WIDTH-1)
+    }
+    if(cellsList[i].positionX < MAP_WIDTH-1)
+    {
+        //de cell rechts kan toegevoegd worden
+        if(!cellsList[i+MAP_HEIGHT].obstacle)
         {
-            //de cell rechts kan toegevoegd worden
-            if(!cellsList[i+MAP_HEIGHT].obstacle)
-            {
-                cellsList[i].neighbours.push_back(i+MAP_HEIGHT);
-            }
+            cellsList[i].neighbours[1] =i+MAP_HEIGHT;
         }
-        if(cellsList[i].positionY > 0)
+    }
+    if(cellsList[i].positionY > 0)
+    {
+        //de cell erboven kan toegevogd worden
+        if(!cellsList[i-1].obstacle)
         {
-            //de cell erboven kan toegevogd worden
-            if(!cellsList[i-1].obstacle)
-            {
-                cellsList[i].neighbours.push_back(i-1);
-            }
+            cellsList[i].neighbours[2] =i-1;
         }
-        if(cellsList[i].positionY != MAP_HEIGHT-1)
+    }
+    if(cellsList[i].positionY != MAP_HEIGHT-1)
+    {
+        //de cell eronder kan toegevoegd worden
+        if(!cellsList[i+1].obstacle)
         {
-            //de cell eronder kan toegevoegd worden
-            if(!cellsList[i+1].obstacle)
-            {
-                cellsList[i].neighbours.push_back(i+1);
-            }
+            cellsList[i].neighbours[3] =i+1;
         }
-        //schuin gaan...
-        if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX < MAP_WIDTH-1)
+    }
+    //schuin gaan...
+    if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX < MAP_WIDTH-1)
+    {
+        //de cell rechtsonder kan toegevoegd worden
+        if(!cellsList[i+1+MAP_HEIGHT].obstacle )
         {
-            //de cell rechtsonder kan toegevoegd worden
-            if(!cellsList[i+1+MAP_HEIGHT].obstacle )
+            if(!(cellsList[i+1].obstacle  && cellsList[i+MAP_HEIGHT].obstacle))
             {
-                if(cellsList[i+1].obstacle  && cellsList[i+MAP_HEIGHT].obstacle)
-                {
-                    //Dit hokje wordt door de twee buur hokjes geblokkeerd!
-                }
-                else
-                {
-                    cellsList[i].neighbours.push_back(i+1+MAP_HEIGHT);
-                }
-            }
-        }
-        if(cellsList[i].positionY >0 && cellsList[i].positionX < MAP_WIDTH-1)
-        {
-            //de cell rechtsboven kan toegevoegd worden
-            if(!cellsList[i-1+MAP_HEIGHT].obstacle)
-            {
-                if(cellsList[i-1].obstacle && cellsList[i+MAP_HEIGHT].obstacle)
-                {
-                    //Dit hokje wordt door de twee buur hokjes geblokkeerd!
-                }
-                else
-                {
-                    cellsList[i].neighbours.push_back(i-1+MAP_HEIGHT);
-                }
-            }
-        }
-        if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX > 0)
-        {
-            //de cell linksonder kan toegevoegd worden
-            if(!cellsList[i+1-MAP_HEIGHT].obstacle)
-            {
-                if(cellsList[i+1].obstacle && cellsList[i-MAP_HEIGHT].obstacle)
-                {
-                    //Dit hokje wordt door de twee buur hokjes geblokkeerd!
-                }
-                else
-                {
-                    cellsList[i].neighbours.push_back(i+1-MAP_HEIGHT);
-                }
-            }
-        }
-        if(cellsList[i].positionY >0 && cellsList[i].positionX > 0)
-        {
-            //de cell rechtsboven kan toegevoegd worden
-            if(!cellsList[i-1-MAP_HEIGHT].obstacle)
-            {
-                if(cellsList[i-MAP_HEIGHT].obstacle && cellsList[i-1].obstacle)
-                {
-                    //Dit hokje wordt door de twee buur hokjes geblokkeerd!
-                }
-                else
-                {
-                    cellsList[i].neighbours.push_back(i-1-MAP_HEIGHT);
-                }
+                cellsList[i].neighbours[4] =i+1+MAP_HEIGHT;
             }
         }
     }
+    if(cellsList[i].positionY >0 && cellsList[i].positionX < MAP_WIDTH-1)
+    {
+        //de cell rechtsboven kan toegevoegd worden
+        if(!cellsList[i-1+MAP_HEIGHT].obstacle)
+        {
+            if(!(cellsList[i-1].obstacle && cellsList[i+MAP_HEIGHT].obstacle))
+            {
+                cellsList[i].neighbours[5] =i-1+MAP_HEIGHT;
+            }
+        }
+    }
+    if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX > 0)
+    {
+        //de cell linksonder kan toegevoegd worden
+        if(!cellsList[i+1-MAP_HEIGHT].obstacle)
+        {
+            if(!(cellsList[i+1].obstacle && cellsList[i-MAP_HEIGHT].obstacle))
+            {
+                cellsList[i].neighbours[6] =i+1-MAP_HEIGHT;
+            }
+        }
+    }
+    if(cellsList[i].positionY >0 && cellsList[i].positionX > 0)
+    {
+        //de cell rechtsboven kan toegevoegd worden
+        if(!cellsList[i-1-MAP_HEIGHT].obstacle)
+        {
+            if(!(cellsList[i-MAP_HEIGHT].obstacle && cellsList[i-1].obstacle))
+            {
+                cellsList[i].neighbours[7] =i-1-MAP_HEIGHT;
+            }
+        }
+    }
+
 }
 
 double dist(double x1, double y1, double x2, double y2)
 {
-    double x = x1 - x2; //calculating number to square in next step
-    double y = y1 - y2;
+////calculating Euclidean distance
+//    double x = x1 - x2; //calculating number to square in next step
+//    double y = y1 - y2;
+//    double dist;
+//    dist = pow(x, 2) + pow(y, 2);
+//    dist = sqrt(dist);
+
+
+//Manhattan distance
     double dist;
-    dist = pow(x, 2) + pow(y, 2);       //calculating Euclidean distance
-    dist = sqrt(dist);
+    int x_dif, y_dif;
+    x_dif = x2 - x1;
+    y_dif = y2 - y1;
+    if(x_dif < 0)
+    {
+        x_dif = -x_dif;
+    }
+    if(y_dif < 0)
+    {
+        y_dif = -y_dif;
+    }
+    dist = x_dif + y_dif;
     return dist;
+}
+
+
+
+bool actors::canTargetBeReached()
+{
+    int sourceX = this->actorCords[0];
+    int sourceY = this->actorCords[1];
+    int targetX = this->actorGoal[0];
+    int targetY = this->actorGoal[1];
+    int maxCellId =  MAP_HEIGHT*MAP_WIDTH;
+    int cellsList[maxCellId][2];
+    int startCell = (sourceX*MAP_HEIGHT)+sourceY;
+    int endCell = (targetX*MAP_HEIGHT)+targetY;
+    int collisionCellId = 0;
+    for(int i = 0; i < maxCellId; i++)
+    {
+        cellsList[i][0] = 0;
+        cellsList[i][1] = 0;
+    }
+    cellsList[startCell][0] = 1;
+    cellsList[endCell][1] = 1;
+    islandCell checkedListFromSource[maxCellId];
+    std::list <islandCell> toCheckListFromSource;
+    islandCell checkedListFromTarget[maxCellId];
+    std::list <islandCell> toCheckListFromTarget;
+    toCheckListFromSource.push_back({sourceX, sourceY, startCell, 0, 0});
+    toCheckListFromTarget.push_back({targetX, targetY, endCell, 0, 0});
+    bool cellIsInBothLists = false;
+    int cellScore = 0;
+    while(!toCheckListFromSource.empty() && !toCheckListFromTarget.empty() && !cellIsInBothLists)
+    {
+        for(int i = 0; i < 8; i++)
+        {
+            int tempSourceCellId;
+            int tempSourceX;
+            int tempSourceY;
+            int tempTargetCellId;
+            int tempTargetX;
+            int tempTargetY;
+            switch(i)
+            {
+            case 0:
+                //north
+                tempSourceX = toCheckListFromSource.front().positionX;
+                tempSourceY = toCheckListFromSource.front().positionY-1;
+                tempTargetX = toCheckListFromTarget.front().positionX;
+                tempTargetY = toCheckListFromTarget.front().positionY-1;
+                break;
+            case 1:
+
+                //NorthEast
+                tempSourceX = toCheckListFromSource.front().positionX+1;
+                tempSourceY = toCheckListFromSource.front().positionY-1;
+                tempTargetX = toCheckListFromTarget.front().positionX+1;
+                tempTargetY = toCheckListFromTarget.front().positionY-1;
+                break;
+            case 2:
+                //East
+                tempSourceX = toCheckListFromSource.front().positionX+1;
+                tempSourceY = toCheckListFromSource.front().positionY;
+                tempTargetX = toCheckListFromTarget.front().positionX+1;
+                tempTargetY = toCheckListFromTarget.front().positionY;
+                break;
+            case 3:
+                //SouthEast
+                tempSourceX = toCheckListFromSource.front().positionX+1;
+                tempSourceY = toCheckListFromSource.front().positionY+1;
+                tempTargetX = toCheckListFromTarget.front().positionX+1;
+                tempTargetY = toCheckListFromTarget.front().positionY+1;
+                break;
+            case 4:
+                //South
+                tempSourceX = toCheckListFromSource.front().positionX;
+                tempSourceY = toCheckListFromSource.front().positionY+1;
+                tempTargetX = toCheckListFromTarget.front().positionX;
+                tempTargetY = toCheckListFromTarget.front().positionY+1;
+                break;
+            case 5:
+                //SouthWest
+                tempSourceX = toCheckListFromSource.front().positionX-1;
+                tempSourceY = toCheckListFromSource.front().positionY+1;
+                tempTargetX = toCheckListFromTarget.front().positionX-1;
+                tempTargetY = toCheckListFromTarget.front().positionY+1;
+                break;
+            case 6:
+                //West
+                tempSourceX = toCheckListFromSource.front().positionX-1;
+                tempSourceY = toCheckListFromSource.front().positionY;
+                tempTargetX = toCheckListFromTarget.front().positionX-1;
+                tempTargetY = toCheckListFromTarget.front().positionY;
+                break;
+            case 7:
+                //NorthWest
+                tempSourceX = toCheckListFromSource.front().positionX-1;
+                tempSourceY = toCheckListFromSource.front().positionY-1;
+                tempTargetX = toCheckListFromTarget.front().positionX-1;
+                tempTargetY = toCheckListFromTarget.front().positionY-1;
+                break;
+            }
+            tempSourceCellId = (tempSourceX*MAP_HEIGHT)+tempSourceY;
+            tempTargetCellId = (tempTargetX*MAP_HEIGHT)+tempTargetY;
+            if(tempSourceCellId >= 0 && tempSourceCellId < maxCellId)
+            {
+                if(currentGame.isPassable(tempSourceX,tempSourceY))
+                {
+                    if(cellsList[tempSourceCellId][0] == 0)
+                    {
+                        toCheckListFromSource.push_back({tempSourceX, tempSourceY, tempSourceCellId, cellScore, toCheckListFromSource.front().cellId});
+                        cellsList[tempSourceCellId][0] = 1;
+                        if(cellsList[tempSourceCellId][1] == 1)
+                        {
+                            checkedListFromSource[tempSourceCellId] = toCheckListFromSource.back();
+                            std::list<islandCell>::iterator it;
+                            for (it = toCheckListFromTarget.begin(); it != toCheckListFromTarget.end(); ++it)
+                            {
+                                if(it->cellId == toCheckListFromSource.back().cellId)
+                                {
+                                    checkedListFromTarget[tempSourceCellId] = {it->positionX, it->positionY, it->cellId, it->cellScore, it->parentId};
+                                }
+                            }
+                            cellIsInBothLists = true;
+                            collisionCellId = tempSourceCellId;
+                            i = 8;
+                        }
+                    }
+                }
+            }
+            if(tempTargetCellId >= 0 && tempTargetCellId < maxCellId)
+            {
+                if(currentGame.isPassable(tempTargetX,tempTargetY))
+                {
+                    if(cellsList[tempTargetCellId][1] == 0)
+                    {
+                        toCheckListFromTarget.push_back({tempTargetX, tempTargetY, tempSourceCellId, cellScore, toCheckListFromTarget.front().cellId});
+                        cellsList[tempTargetCellId][1] = 1;
+                        if(cellsList[tempTargetCellId][0] == 1)
+                        {
+                            checkedListFromTarget[tempTargetCellId] = toCheckListFromTarget.back();
+                            std::list<islandCell>::iterator it;
+                            for (it = toCheckListFromSource.begin(); it != toCheckListFromSource.end(); ++it)
+                            {
+                                if(it->cellId == toCheckListFromTarget.back().cellId)
+                                {
+                                    checkedListFromSource[tempTargetCellId] = {it->positionX, it->positionY, it->cellId, it->cellScore, it->parentId};
+                                }
+                            }
+                            cellIsInBothLists = true;
+                            collisionCellId = tempTargetCellId;
+                            i = 8;
+                        }
+                    }
+                }
+            }
+        }
+        checkedListFromSource[toCheckListFromSource.front().cellId] = toCheckListFromSource.front();
+        checkedListFromTarget[toCheckListFromTarget.front().cellId] = toCheckListFromTarget.front();
+        toCheckListFromSource.pop_front();
+        toCheckListFromTarget.pop_front();
+        cellScore += +1;
+    }
+    return cellIsInBothLists;
 }
 
 std::vector<actors> listOfActors;
@@ -811,11 +979,51 @@ nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
 
 void actors::calculateRoute()
 {
-    cellsList->updateCells(actorGoal[0], actorGoal[1]);
+    this->noPathPossible = false;
+    this->forwardIsDone = false;
+    this->collisionCell = -1;
+    this->mapArray.reserve(MAP_HEIGHT*MAP_WIDTH);
+    this->mapArrayBack.reserve(MAP_HEIGHT*MAP_WIDTH);
+    for(int i = 0; i < MAP_HEIGHT*MAP_WIDTH; i++)
+    {
+        this->mapArray[i] = 0;
+        this->mapArrayBack[i] = 0;
+    }
+    std::thread pathfinding(&actors::pathAStar, &listOfActors[this->actorId], false);
+    //std::thread pathfindingBackwards(&actors::pathAStar, &listOfActors[this->actorId], true);
+    if(canTargetBeReached())
+    {
+        pathfinding.join();
+        //pathfindingBackwards.join();
+    }
+    else
+    {
+        this->noPathPossible = true;
+        pathfinding.join();
+        //pathfindingBackwards.join();
+    }
+}
+
+
+void actors::pathAStar(bool backward)
+{
+    std::vector<Cells> cellsList;
+    cellsList.reserve(MAP_HEIGHT*MAP_WIDTH);
+    updateCells(this->actorGoal[0], this->actorGoal[1], cellsList);
     std::list<Cells> listToCheck;
     std::list<Cells> checkedList;
-    int startCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
-    int endCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
+    int startCell;
+    int endCell;
+    if(!backward)
+    {
+        startCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
+        endCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
+    }
+    else
+    {
+        endCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
+        startCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
+    }
     bool endReached = false;
 
     //check of de doelcel niet 1 hokje weg is
@@ -833,13 +1041,19 @@ void actors::calculateRoute()
     }
     else
     {
-        listToCheck.push_back(cellsList[startCell]);
         this->pathFound = false;
+        addNeighbours(startCell, cellsList);
         cellsList[startCell].visited = true;
+        listToCheck.push_back(cellsList[startCell]);
     }
 
     while(!listToCheck.empty() && startCell != endCell)
     {
+        if(this->collisionCell != -1)
+        {
+            listToCheck.clear();
+            this->pathFound = true;
+        }
         //sorteer de lijst en zet de cell met de laagste cost to goal bovenaan om het eerst te testen
         listToCheck.sort([](const Cells &f, const Cells &s)
         {
@@ -851,35 +1065,68 @@ void actors::calculateRoute()
             listToCheck.clear();
             this->pathFound = true;
         }
+        else if(this->noPathPossible)
+        {
+            listToCheck.clear();
+        }
         else
         {
-            for (std::list<int>::const_iterator iterator =  listToCheck.front().neighbours.begin(), end =  listToCheck.front().neighbours.end(); iterator != end; ++iterator)
+            for(int q = 0; q < 8; q++)
             {
-                //We have found neighbours!
-                //check if neighbours was found before
-                if(!cellsList[*iterator].visited)
+                if(listToCheck.front().neighbours[q] != -1)
                 {
-                    //Deze cell heeft geen parent is is dus nooit eerder gevonden!
-                    //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
-                    cellsList[*iterator].parentCellId = listToCheck.front().cellId;
-                    //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
-                    cellsList[*iterator].cummulativeCost = listToCheck.front().cummulativeCost+1;
-                    //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
-                    listToCheck.push_back(cellsList[*iterator]);
-                    //Bereken de afstand naar het doel
-                    cellsList[*iterator].costToGoal = dist(cellsList[*iterator].positionX,cellsList[*iterator].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
-                    cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
-                    cellsList[*iterator].visited = true;
-                }
-                else
-                {
-                    //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
-                    if(listToCheck.front().cummulativeCost+1 < cellsList[*iterator].cummulativeCost)
+                    int newCellId = listToCheck.front().neighbours[q];
+                    //We have found neighbours!
+                    //check if neighbours was found before
+                    if(!cellsList[newCellId].visited)
                     {
-                        //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
-                        cellsList[*iterator].parentCellId = listToCheck.front().cellId;
-                        cellsList[*iterator].cummulativeCost = listToCheck.front().cummulativeCost+1;
-                        cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
+                        //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
+                        addNeighbours(newCellId, cellsList);
+                        //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
+                        cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                        //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
+                        cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                        //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
+                        listToCheck.push_back(cellsList[newCellId]);
+                        //Bereken de afstand naar het doel
+                        cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
+                        cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
+                        cellsList[newCellId].visited = true;
+                        if(backward)
+                        {
+                            if(this->mapArray[newCellId] == 1)
+                            {
+                                //Collisiion!
+                                this->collisionCell = newCellId;
+                            }
+                            else
+                            {
+                                this->mapArrayBack[newCellId] = 1;
+                            }
+                        }
+                        else
+                        {
+                            if(this->mapArrayBack[newCellId] == 1)
+                            {
+                                //Collisiion!
+                                this->collisionCell = newCellId;
+                            }
+                            else
+                            {
+                                this->mapArray[newCellId] = 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
+                        if(listToCheck.front().cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
+                        {
+                            //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
+                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
+                        }
                     }
                 }
             }
@@ -887,18 +1134,56 @@ void actors::calculateRoute()
             listToCheck.pop_front();
         }
     }
+
+
+
     //Zet de te lopen route in een lijst
-    this->route.clear();
-    this->route.push_back(cellsList[endCell]);
-    if(this->pathFound)
+    if(!backward)
     {
+        this->route.clear();
+        if(this->collisionCell == -1)
+        {
+            this->route.push_back({cellsList[endCell].positionX, cellsList[endCell].positionY, cellsList[endCell].visited, cellsList[endCell].parentCellId});
+        }
+        else
+        {
+            this->route.push_back({cellsList[collisionCell].positionX, cellsList[collisionCell].positionY, cellsList[collisionCell].visited, cellsList[collisionCell].parentCellId});
+            this->forwardIsDone = true;
+        }
+        if(this->pathFound)
+        {
+            while(!endReached)
+            {
+                if(route.back().visited == true)
+                {
+
+                    this->route.push_back({cellsList[route.back().parentCellId].positionX, cellsList[route.back().parentCellId].positionY, cellsList[route.back().parentCellId].visited, cellsList[route.back().parentCellId].parentCellId});
+                    if(this->route.back().parentCellId == startCell)
+                    {
+                        endReached = true;
+                    }
+                }
+                else
+                {
+                    endReached = true;
+                }
+            }
+        }
+    }
+    else if(this->pathFound && this->collisionCell != -1)
+    {
+        while(!this->forwardIsDone)
+        {
+            //wait
+        }
         while(!endReached)
         {
-            if(route.back().visited == true)
+            if(route.front().visited == true)
             {
-                this->route.push_back(cellsList[route.back().parentCellId]);
-                if(this->route.back().parentCellId == startCell)
+                this->route.push_front({cellsList[route.front().parentCellId].positionX, cellsList[route.front().parentCellId].positionY, cellsList[route.front().parentCellId].visited, cellsList[route.front().parentCellId].parentCellId});
+                if(this->route.front().parentCellId == startCell)
                 {
+                    this->route.push_front({cellsList[route.front().parentCellId].positionX, cellsList[route.front().parentCellId].positionY, cellsList[route.front().parentCellId].visited, cellsList[route.front().parentCellId].parentCellId});
                     endReached = true;
                 }
             }
@@ -909,6 +1194,12 @@ void actors::calculateRoute()
         }
     }
 }
+
+
+
+
+
+
 
 void actors:: drawActor()
 {
@@ -976,73 +1267,52 @@ void actors:: drawActor()
         spriteYoffset = 128;
         break;
     }
-    if(this->isAtRecource && this->ResourceBeingGatherd == 0)
+    int spriteOffset = 0;
+    if(this->isAtRecource)
     {
-        switch(this->orientation)
+        if(this->ResourceBeingGatherd == 0)
         {
-        case 0:
-            spriteXoffset = 208;
-            break;
-        case 1:
-            spriteXoffset = 128;
-            break;
-        case 2:
-            spriteXoffset = 224;
-            break;
-        case 3:
-            spriteXoffset = 176;
-            break;
-        case 4:
-            spriteXoffset = 192;
-            break;
-        case 5:
-            spriteXoffset = 160;
-            break;
-        case 6:
-            spriteXoffset = 240;
-            break;
-        case 7:
-            spriteXoffset = 144;
-            break;
-        default:
-            spriteXoffset = 128;
-            break;
+            spriteOffset = 128;
+        }
+        else if(this->ResourceBeingGatherd == 2 || this->ResourceBeingGatherd == 3)
+        {
+            spriteOffset = 256;
+        }
+        else if(this->ResourceBeingGatherd == 1)
+        {
+            spriteOffset = 384;
         }
     }
-    else
+    switch(this->orientation)
     {
-        switch(this->orientation)
-        {
-        case 0:
-            spriteXoffset = 80;
-            break;
-        case 1:
-            spriteXoffset = 0;
-            break;
-        case 2:
-            spriteXoffset = 96;
-            break;
-        case 3:
-            spriteXoffset = 48;
-            break;
-        case 4:
-            spriteXoffset = 64;
-            break;
-        case 5:
-            spriteXoffset = 32;
-            break;
-        case 6:
-            spriteXoffset = 112;
-            break;
-        case 7:
-            spriteXoffset = 16;
-            break;
-        default:
-            spriteXoffset = 0;
-            break;
-        }
+    case 0:
+        spriteXoffset = 80 + spriteOffset;
+        break;
+    case 1:
+        spriteXoffset = 0 + spriteOffset;
+        break;
+    case 2:
+        spriteXoffset = 96 + spriteOffset;
+        break;
+    case 3:
+        spriteXoffset = 48 + spriteOffset;
+        break;
+    case 4:
+        spriteXoffset = 64 + spriteOffset;
+        break;
+    case 5:
+        spriteXoffset = 32 + spriteOffset;
+        break;
+    case 6:
+        spriteXoffset = 112 + spriteOffset;
+        break;
+    case 7:
+        spriteXoffset = 16 + spriteOffset;
+        break;
+    default:
+        spriteXoffset = 0 + spriteOffset;
+        break;
     }
-
     xPosition = xPosition + this->offSetX;
     yPosition = yPosition + this->offSetY;
     currentGame.spriteVillager.setPosition(xPosition, yPosition);
@@ -1053,7 +1323,7 @@ void actors:: drawActor()
 
 void actors::renderPath()
 {
-    std::list<Cells>::iterator it;
+    std::list<routeCell>::iterator it;
     for(it = route.begin(); it!=route.end(); it++)
     {
         currentGame.spriteSelectedTileForPath.setPosition(worldSpace(it->positionX, it->positionY, true), worldSpace(it->positionX, it->positionY, false));

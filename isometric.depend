@@ -419,7 +419,7 @@
 	<math.h>
 	<list>
 
-1586804672 source:d:\programming\isometric\main.cpp
+1586874541 source:d:\programming\isometric\main.cpp
 	<SFML/Graphics.hpp>
 	<iostream>
 	<vector>
@@ -488,7 +488,7 @@
 
 1584720289 d:\programming\isometric\globals.h
 
-1586804194 source:d:\programming\isometric\src\actors.cpp
+1586879517 source:d:\programming\isometric\src\actors.cpp
 	"actors.h"
 	"objects.h"
 	"player.h"
@@ -497,7 +497,7 @@
 	<future>
 	<mutex>
 
-1586804126 d:\programming\isometric\include\actors.h
+1586879364 d:\programming\isometric\include\actors.h
 	<cmath>
 	<list>
 	"gamestate.h"

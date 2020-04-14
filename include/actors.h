@@ -8,9 +8,10 @@
 
 
 struct Cells{
-        int positionX, positionY, parentCellId, cummulativeCost, cellId;
+        int positionX, positionY, parentCellId, cummulativeCost, cellId, backParent;
         double costToGoal, totalCostGuess;
         bool visited = false;
+        bool visitedBack = false;
         bool obstacle = false;
         int neighbours[8];
 };
@@ -39,6 +40,7 @@ struct routeCell
     int positionY;
     int visited;
     int parentCellId;
+    int backParent;
 };
 
 class actors
@@ -55,8 +57,10 @@ class actors
         void setCommonGoalTrue();
         void setGatheringRecource(bool flag);
         bool canTargetBeReached();
+        void checkCollision(int newCellId);
         nearestBuildingTile findNearestDropOffPoint(int Resource);
-        void pathAStar(bool backward);
+        void pathAStar();
+        void pathAStarBiDi();
 
 
 
@@ -108,11 +112,8 @@ class actors
         float offSetX;
         float offSetY;
         bool noPathPossible;
-        bool forwardIsDone;
-        int collisionCell;
         bool routeNeedsPath;
-        std::vector<int> mapArray;
-        std::vector<int> mapArrayBack;
+        int mapArray[MAP_HEIGHT*MAP_WIDTH];
         nearestBuildingTile dropOffTile;
         std::list<routeCell> route;
 

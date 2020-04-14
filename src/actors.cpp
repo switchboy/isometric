@@ -6,9 +6,10 @@
 #include <future>
 #include <mutex>
 
-void updateCells(int goalX, int goalY, std::vector<Cells>& cellsList)
+std::mutex mtx;
+
+void updateCells(int goalId, int startId, std::vector<Cells>& cellsList)
 {
-    int goalId = (goalX*MAP_HEIGHT)+goalY;
     int n = 0;
     for(int i = 0; i < MAP_WIDTH; i++)
     {
@@ -16,7 +17,7 @@ void updateCells(int goalX, int goalY, std::vector<Cells>& cellsList)
         {
             cellsList[n].positionX = i;
             cellsList[n].positionY = j;
-            if(n == goalId)
+            if(n == goalId || n == startId)
             {
                 cellsList[n].obstacle = false;
             }
@@ -33,10 +34,6 @@ void updateCells(int goalX, int goalY, std::vector<Cells>& cellsList)
             cellsList[n].parentCellId = NULL;
             cellsList[n].cummulativeCost = NULL;
             cellsList[n].totalCostGuess = NULL;
-            for(int q = 0; q <8; q++)
-            {
-                cellsList[n].neighbours[q] = -1;
-            }
             cellsList[n].cellId = n;
             n++;
         }
@@ -53,6 +50,10 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
         {
             cellsList[i].neighbours[0] = i-MAP_HEIGHT;
         }
+        else
+        {
+            cellsList[i].neighbours[0] = -1;
+        }
     }
     if(cellsList[i].positionX < MAP_WIDTH-1)
     {
@@ -60,6 +61,10 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
         if(!cellsList[i+MAP_HEIGHT].obstacle)
         {
             cellsList[i].neighbours[1] =i+MAP_HEIGHT;
+        }
+        else
+        {
+            cellsList[i].neighbours[1] = -1;
         }
     }
     if(cellsList[i].positionY > 0)
@@ -69,6 +74,10 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
         {
             cellsList[i].neighbours[2] =i-1;
         }
+        else
+        {
+            cellsList[i].neighbours[2] = -1;
+        }
     }
     if(cellsList[i].positionY != MAP_HEIGHT-1)
     {
@@ -76,6 +85,10 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
         if(!cellsList[i+1].obstacle)
         {
             cellsList[i].neighbours[3] =i+1;
+        }
+        else
+        {
+            cellsList[i].neighbours[3] = -1;
         }
     }
     //schuin gaan...
@@ -88,6 +101,14 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
             {
                 cellsList[i].neighbours[4] =i+1+MAP_HEIGHT;
             }
+            else
+            {
+                cellsList[i].neighbours[4] = -1;
+            }
+        }
+        else
+        {
+            cellsList[i].neighbours[4] = -1;
         }
     }
     if(cellsList[i].positionY >0 && cellsList[i].positionX < MAP_WIDTH-1)
@@ -99,6 +120,14 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
             {
                 cellsList[i].neighbours[5] =i-1+MAP_HEIGHT;
             }
+            else
+            {
+                cellsList[i].neighbours[5] = -1;
+            }
+        }
+        else
+        {
+            cellsList[i].neighbours[5] = -1;
         }
     }
     if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX > 0)
@@ -110,6 +139,14 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
             {
                 cellsList[i].neighbours[6] =i+1-MAP_HEIGHT;
             }
+            else
+            {
+                cellsList[i].neighbours[6] = -1;
+            }
+        }
+        else
+        {
+            cellsList[i].neighbours[6] = -1;
         }
     }
     if(cellsList[i].positionY >0 && cellsList[i].positionX > 0)
@@ -121,36 +158,25 @@ void addNeighbours(int& i, std::vector<Cells>& cellsList)
             {
                 cellsList[i].neighbours[7] =i-1-MAP_HEIGHT;
             }
+            else
+            {
+                cellsList[i].neighbours[7] = -1;
+            }
+        }
+        else
+        {
+            cellsList[i].neighbours[7] = -1;
         }
     }
-
 }
 
 double dist(double x1, double y1, double x2, double y2)
 {
-////calculating Euclidean distance
-//    double x = x1 - x2; //calculating number to square in next step
-//    double y = y1 - y2;
-//    double dist;
-//    dist = pow(x, 2) + pow(y, 2);
-//    dist = sqrt(dist);
-
+//Euclidean distance
+//    return = sqrt(pow((x1 - x2), 2) + pow((y1 - y2), 2));
 
 //Manhattan distance
-    double dist;
-    int x_dif, y_dif;
-    x_dif = x2 - x1;
-    y_dif = y2 - y1;
-    if(x_dif < 0)
-    {
-        x_dif = -x_dif;
-    }
-    if(y_dif < 0)
-    {
-        y_dif = -y_dif;
-    }
-    dist = x_dif + y_dif;
-    return dist;
+    return fabs(x2 - x1) + fabs(y2 - y1);
 }
 
 
@@ -490,7 +516,7 @@ void actors::update()
             this->waitForAmountOfFrames += -1;
         }
     }
-    else
+    else if(!this->routeNeedsPath)
     {
         if(this->busyWalking && (currentGame.elapsedTime-this->timeLastUpdate) > 1.0f)
         {
@@ -980,56 +1006,27 @@ nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
 
 void actors::calculateRoute()
 {
-    if(this->routeNeedsPath){
+    if(this->routeNeedsPath)
+    {
         this->noPathPossible = false;
-        this->forwardIsDone = false;
-        this->collisionCell = -1;
-        this->mapArray.reserve(MAP_HEIGHT*MAP_WIDTH);
-        this->mapArrayBack.reserve(MAP_HEIGHT*MAP_WIDTH);
-        for(int i = 0; i < MAP_HEIGHT*MAP_WIDTH; i++)
-        {
-            this->mapArray[i] = 0;
-            this->mapArrayBack[i] = 0;
-        }
-        std::thread pathfinding(&actors::pathAStar, &listOfActors[this->actorId], false);
-        //std::thread pathfindingBackwards(&actors::pathAStar, &listOfActors[this->actorId], true);
-        if(canTargetBeReached())
-        {
-            pathfinding.join();
-            //pathfindingBackwards.join();
-        }
-        else
+        std::thread pathfinding(&actors::pathAStar, &listOfActors[this->actorId]);
+        if(!canTargetBeReached())
         {
             this->noPathPossible = true;
-            pathfinding.join();
-            //pathfindingBackwards.join();
         }
+        pathfinding.join();
         this->routeNeedsPath = false;
     }
 }
 
-
-std::mutex mtx;
-
-void actors::pathAStar(bool backward)
+void actors::pathAStar()
 {
     std::vector<Cells> cellsList;
     cellsList.reserve(MAP_HEIGHT*MAP_WIDTH);
-    updateCells(this->actorGoal[0], this->actorGoal[1], cellsList);
+    int startCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
+    int endCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
+    updateCells(endCell, startCell, cellsList);
     std::list<Cells> listToCheck;
-    std::list<Cells> checkedList;
-    int startCell;
-    int endCell;
-    if(!backward)
-    {
-        startCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
-        endCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
-    }
-    else
-    {
-        endCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
-        startCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
-    }
     bool endReached = false;
 
     //check of de doelcel niet 1 hokje weg is
@@ -1055,16 +1052,12 @@ void actors::pathAStar(bool backward)
 
     while(!listToCheck.empty() && startCell != endCell)
     {
-        if(this->collisionCell != -1)
-        {
-            listToCheck.clear();
-            this->pathFound = true;
-        }
         //sorteer de lijst en zet de cell met de laagste cost to goal bovenaan om het eerst te testen
         listToCheck.sort([](const Cells &f, const Cells &s)
         {
             return f.totalCostGuess < s.totalCostGuess;
         });
+
         //Check of de te checken cell het doel is. Als dat zo is zijn we klaar
         if(listToCheck.front().cellId == endCell)
         {
@@ -1075,7 +1068,7 @@ void actors::pathAStar(bool backward)
         {
             listToCheck.clear();
         }
-        else
+        else if(!listToCheck.empty())
         {
             for(int q = 0; q < 8; q++)
             {
@@ -1098,33 +1091,6 @@ void actors::pathAStar(bool backward)
                         cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
                         cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
                         cellsList[newCellId].visited = true;
-                        while(!mtx.try_lock()){}
-                        if(backward)
-                        {
-                            if(this->mapArray[newCellId] == 1)
-                            {
-                                //Collisiion!
-                                this->collisionCell = newCellId;
-                            }
-                            else
-                            {
-                                this->mapArrayBack[newCellId] = 1;
-
-                            }
-                        }
-                        else
-                        {
-                            if(this->mapArrayBack[newCellId] == 1)
-                            {
-                                //Collisiion!
-                                this->collisionCell = newCellId;
-                            }
-                            else
-                            {
-                                this->mapArray[newCellId] = 1;
-                            }
-                        }
-                        mtx.unlock();
                     }
                     else
                     {
@@ -1139,60 +1105,21 @@ void actors::pathAStar(bool backward)
                     }
                 }
             }
-            checkedList.push_back(listToCheck.front());
             listToCheck.pop_front();
         }
     }
-
-
-
     //Zet de te lopen route in een lijst
-    if(!backward)
+    this->route.clear();
+    this->route.push_back({cellsList[endCell].positionX, cellsList[endCell].positionY, cellsList[endCell].visited, cellsList[endCell].parentCellId});
+    if(this->pathFound)
     {
-        while(!mtx.try_lock()){}
-        this->route.clear();
-        if(this->collisionCell == -1)
-        {
-            this->route.push_back({cellsList[endCell].positionX, cellsList[endCell].positionY, cellsList[endCell].visited, cellsList[endCell].parentCellId});
-        }
-        else
-        {
-            this->route.push_back({cellsList[collisionCell].positionX, cellsList[collisionCell].positionY, cellsList[collisionCell].visited, cellsList[collisionCell].parentCellId});
-        }
-        if(this->pathFound)
-        {
-            while(!endReached)
-            {
-                if(route.back().visited == true)
-                {
-
-                    this->route.push_back({cellsList[route.back().parentCellId].positionX, cellsList[route.back().parentCellId].positionY, cellsList[route.back().parentCellId].visited, cellsList[route.back().parentCellId].parentCellId});
-                    if(this->route.back().parentCellId == startCell)
-                    {
-                        endReached = true;
-                    }
-                }
-                else
-                {
-                    endReached = true;
-                }
-            }
-        }
-        this->forwardIsDone = true;
-        mtx.unlock();
-    }
-    else if(this->pathFound && this->collisionCell != -1)
-    {
-        while(!this->forwardIsDone){ }
-        while(!mtx.try_lock()){}
         while(!endReached)
         {
-            if(route.front().visited == true)
+            if(route.back().visited == true)
             {
-                this->route.push_front({cellsList[route.front().parentCellId].positionX, cellsList[route.front().parentCellId].positionY, cellsList[route.front().parentCellId].visited, cellsList[route.front().parentCellId].parentCellId});
-                if(this->route.front().parentCellId == startCell)
+                this->route.push_back({cellsList[route.back().parentCellId].positionX, cellsList[route.back().parentCellId].positionY, cellsList[route.back().parentCellId].visited, cellsList[route.back().parentCellId].parentCellId});
+                if(this->route.back().parentCellId == startCell)
                 {
-                    this->route.push_front({cellsList[route.front().parentCellId].positionX, cellsList[route.front().parentCellId].positionY, cellsList[route.front().parentCellId].visited, cellsList[route.front().parentCellId].parentCellId});
                     endReached = true;
                 }
             }
@@ -1201,8 +1128,219 @@ void actors::pathAStar(bool backward)
                 endReached = true;
             }
         }
-        mtx.unlock();
     }
+}
+
+
+void actors::pathAStarBiDi()
+{
+    std::vector<Cells> cellsList;
+    cellsList.reserve(MAP_HEIGHT*MAP_WIDTH);
+    int startCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
+    int endCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
+    int collisionCell = -1;
+    updateCells(endCell, startCell, cellsList);
+    std::list<Cells> listToCheck;
+    std::list<Cells> listToCheckBack;
+    bool endReached = false;
+
+    //check of de doelcel niet 1 hokje weg is
+    if(((actorCords[0]-actorGoal[0] == 0) ||(actorCords[0]-actorGoal[0] == -1) ||(actorCords[0]-actorGoal[0] == 1)) && ((actorCords[1]-actorGoal[1] == 0) ||(actorCords[1]-actorGoal[1] == -1) ||(actorCords[1]-actorGoal[1] == 1)))
+    {
+        if(!cellsList[endCell].obstacle)
+        {
+            this->pathFound = true;
+            endReached = true;
+        }
+        else
+        {
+            this->pathFound = false;
+        }
+    }
+    else
+    {
+        this->pathFound = false;
+        addNeighbours(startCell, cellsList);
+        addNeighbours(endCell, cellsList);
+        cellsList[startCell].visited = true;
+        cellsList[endCell].visitedBack = true;
+        listToCheck.push_back(cellsList[startCell]);
+        listToCheckBack.push_back(cellsList[endCell]);
+        std::cout << endCell << " - " << listToCheckBack.front().cellId << " | " << startCell << " - " << listToCheck.front().cellId << "\n";
+    }
+
+
+    while((!listToCheck.empty() && !listToCheckBack.empty()) && startCell != endCell)
+    {
+        //sorteer de lijst en zet de cell met de laagste cost to goal bovenaan om het eerst te testen
+        listToCheck.sort([](const Cells &f, const Cells &s)
+        {
+            return f.totalCostGuess < s.totalCostGuess;
+        });
+        listToCheckBack.sort([](const Cells &f, const Cells &s)
+        {
+            return f.totalCostGuess < s.totalCostGuess;
+        });
+
+        if(collisionCell != -1)
+        {
+            listToCheck.clear();
+            listToCheckBack.clear();
+            this->pathFound = true;
+        } //Check of de te checken cell het doel is. Als dat zo is zijn we klaar
+        else if(listToCheck.front().cellId == endCell)
+        {
+            listToCheck.clear();
+            listToCheckBack.clear();
+            this->pathFound = true;
+        }
+        else if(listToCheckBack.front().cellId == startCell)
+        {
+            listToCheck.clear();
+            listToCheckBack.clear();
+            this->pathFound = true;
+        }
+        //Check of de floodfill niet al heeft vastgesteld dat de route niet kan
+        else if(this->noPathPossible)
+        {
+            listToCheck.clear();
+        }
+        else if(!listToCheck.empty() && !listToCheckBack.empty())
+        {
+            for(int q = 0; q < 8; q++)
+            {
+                if(listToCheck.front().neighbours[q] != -1)
+                {
+                    //We have found neighbours!
+                    int newCellId = listToCheck.front().neighbours[q];
+                    //check if neighbours was found before
+                    if(!cellsList[newCellId].visited)
+                    {
+                        if(!cellsList[newCellId].visitedBack)
+                        {
+                            //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
+                            addNeighbours(newCellId, cellsList);
+                            //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
+                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                            //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
+                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
+                            listToCheck.push_back(cellsList[newCellId]);
+                            //Bereken de afstand naar het doel
+                            cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
+                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
+                            cellsList[newCellId].visited = true;
+                        }
+                        else
+                        {
+                            //deze cell is door de andere kant gevonden!
+                            collisionCell = newCellId;
+                            cellsList[newCellId].visited = true;
+                            cellsList[newCellId].visitedBack = true;
+                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                            q = 8;
+                        }
+
+                    }
+                    else
+                    {
+                        //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
+                        if(listToCheck.front().cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
+                        {
+                            //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
+                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
+                        }
+                    }
+                }
+                if(listToCheckBack.front().neighbours[q] != -1 && q != 8)
+                {
+                    //We have found neighbours!
+                    int newCellId = listToCheckBack.front().neighbours[q];
+                    //check if neighbours was found before
+                    if(!cellsList[newCellId].visitedBack)
+                    {
+                        if(!cellsList[newCellId].visited)
+                        {
+                            //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
+                            addNeighbours(newCellId, cellsList);
+                            //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
+                            cellsList[newCellId].backParent = listToCheckBack.front().cellId;
+                            //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
+                            cellsList[newCellId].cummulativeCost = listToCheckBack.front().cummulativeCost+1;
+                            //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
+                            listToCheckBack.push_back(cellsList[newCellId]);
+                            //Bereken de afstand naar het doel
+                            cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[startCell].positionX,cellsList[startCell].positionY);
+                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
+                            cellsList[newCellId].visitedBack = true;
+                        }
+                        else
+                        {
+                            //deze cell is door de andere kant gevonden!
+                            collisionCell = newCellId;
+                            cellsList[newCellId].visited = true;
+                            cellsList[newCellId].visitedBack = true;
+                            cellsList[newCellId].backParent = listToCheckBack.front().cellId;
+                            q = 8;
+                        }
+                    }
+                    else
+                    {
+                        //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
+                        if(listToCheck.front().cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
+                        {
+                            //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
+                            cellsList[newCellId].backParent = listToCheck.front().cellId;
+                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
+                        }
+                    }
+                }
+            }
+            listToCheck.pop_front();
+            listToCheckBack.pop_front();
+        }
+    }
+    //Zet de te lopen route in een lijst
+    this->route.clear();
+    this->route.push_back({cellsList[collisionCell].positionX, cellsList[collisionCell].positionY, cellsList[collisionCell].visited, cellsList[collisionCell].parentCellId,  cellsList[collisionCell].backParent});
+    if(this->pathFound)
+    {
+        while(!endReached)
+        {
+            if(route.back().visited == true)
+            {
+                this->route.push_back({cellsList[route.back().parentCellId].positionX, cellsList[route.back().parentCellId].positionY, cellsList[route.back().parentCellId].visited, cellsList[route.back().parentCellId].parentCellId, cellsList[route.front().backParent].backParent});
+                if(this->route.back().parentCellId == startCell)
+                {
+                    endReached = true;
+                }
+            }
+            else
+            {
+                endReached = true;
+            }
+        }
+        endReached = false;
+        while(!endReached)
+        {
+            if(route.front().visited == true)
+            {
+                this->route.push_front({cellsList[route.front().backParent].positionX, cellsList[route.front().backParent].positionY, cellsList[route.front().backParent].visitedBack, cellsList[route.front().parentCellId].parentCellId, cellsList[route.front().backParent].backParent});
+                if(this->route.front().parentCellId == endCell)
+                {
+                    endReached = true;
+                }
+            }
+            else
+            {
+                endReached = true;
+            }
+        }
+    }
+    this->route.pop_front();
 }
 
 

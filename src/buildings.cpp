@@ -161,3 +161,15 @@ void buildings::drawBuildingFootprint(int type, int mouseWorldX, int mouseWorldY
     }
 }
 
+void buildings::update(){
+    switch(this->buildingType){
+    case 0:
+        break;
+    case 1:
+        this->updateTownCenter();
+        break;
+    }
+}
+
+void buildings::updateTownCenter(){
+}

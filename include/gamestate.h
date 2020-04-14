@@ -6,6 +6,7 @@
 extern int mainWindowWidth;
 extern int mainWindowHeigth;
 extern sf::RenderWindow window;
+extern sf::View totalView;
 extern sf::View topBar;
 extern sf::View worldView;
 extern sf::View toolBar;
@@ -46,13 +47,13 @@ public:
     spriteSandTileNW,spriteSandTileSE,spriteSandTileSW, spriteCactusTile, spriteCypressTrileTile,
     spriteNormalTreeTile, spritePineTreeTile, spriteTileObstructed, spriteTownCenter,
     spriteStone, spriteGold, spriteBerryBush,
-    spriteWaterTile, spriteBeachTileNE, spriteBeachTileNW,spriteBeachTileSE,spriteBeachTileSW, spriteBuildingHouse, spriteVillager;
+    spriteWaterTile, spriteBeachTileNE, spriteBeachTileNW,spriteBeachTileSE,spriteBeachTileSW, spriteBuildingHouse, spriteVillager, spriteTotalBackground;
 
     sf::Texture textureSelectedTile, textureSelectedTileForPath, textureEmptyTile, textureGrassTile, textureSandTile, textureSandTileNE,
     textureSandTileNW,textureSandTileSE,textureSandTileSW, textureCactusTile, textureCypressTrileTile,
     textureNormalTreeTile, texturePineTreeTile, textureCheatTile, textureTileObstructed, textureTownCenter,
     textureStone, textureGold, textureBerryBush,
-    textureWaterTile, textureBeachTileNE, textureBeachTileNW,textureBeachTileSE, textureBeachTileSW, textureBuildingHouse, textureVillager;
+    textureWaterTile, textureBeachTileNE, textureBeachTileNW,textureBeachTileSE, textureBeachTileSW, textureBuildingHouse, textureVillager, textureTotalBackground;
     int currentMap[MAP_WIDTH][MAP_HEIGHT];
     int buildingLocationList[MAP_WIDTH][MAP_HEIGHT];
     int objectLocationList[MAP_WIDTH][MAP_HEIGHT];

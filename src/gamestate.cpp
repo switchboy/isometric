@@ -239,6 +239,10 @@ void gameState::loadTextures()
         spriteCypressTrileTile.setTexture(textureCypressTrileTile);
         spriteCypressTrileTile.setOrigin(0,32);
     }
+    if(textureTotalBackground.loadFromFile("textures/totalBackground.png"))
+    {
+        spriteTotalBackground.setTexture(textureTotalBackground);
+    }
     else
     {
         std::cout << "Error loading texture: cypressTree.png \n" << std::endl;
@@ -1060,17 +1064,12 @@ void gameState::drawMiniMap()
 void gameState::drawToolbar()
 {
     window.setView(toolBar);
-    sf::RectangleShape tempBox(sf::Vector2f(mainWindowWidth, this->miniMapHeigth));
-    tempBox.setFillColor(sf::Color(116,86,61));
-    window.draw(tempBox);
+
     window.setView(worldView);
 }
 
 void gameState::drawTopBar(){
     window.setView(topBar);
-    sf::RectangleShape tempBox1(sf::Vector2f(mainWindowWidth, this->topBarHeigth));
-    tempBox1.setFillColor(sf::Color(116,86,61));
-    window.draw(tempBox1);
     playerStats tempStats = currentPlayer.getStats();
     std::stringstream resourcesText;
     resourcesText   << "Wood: " << tempStats.amountOfWood <<" | Food: " << tempStats.amountOfFood << " | Stone: " << tempStats.amountOfStone << " | Gold: " << tempStats.amountOfGold
@@ -1087,7 +1086,9 @@ void gameState::drawTopBar(){
 void gameState::drawGame()
 {
     window.clear(sf::Color(0, 0, 0));
-    worldView.setCenter(viewOffsetX, viewOffsetY);;
+    worldView.setCenter(viewOffsetX, viewOffsetY);
+    window.setView(totalView);
+    window.draw(spriteTotalBackground);
     window.setView(worldView);
     drawTopBar();
     drawMap();
@@ -1127,6 +1128,7 @@ void gameState::loadBuildings()
 
 void gameState::loadGame()
 {
+    totalView.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f));
     worldView.setViewport(sf::FloatRect(0.f, 0.03f, 1.f, 0.77f));
     topBar.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 0.03f));
     toolBar.setViewport(sf::FloatRect(0.f, 0.8f, 1.f, 0.2f));

@@ -363,6 +363,7 @@ actors::actors(int type, int actorX, int actorY, int actorTeam, int actorId)
     this->timeLastOffsetChange = 0.0f;
     this->timeStartedWalkingToRecource = 0.0f;
     this->goalNeedsUpdate = false;
+    this->routeNeedsPath = false;
     this->busyWalking = false;
     this->pathFound = false;
     this->isAtRecource = false;
@@ -1342,11 +1343,6 @@ void actors::pathAStarBiDi()
     }
     this->route.pop_front();
 }
-
-
-
-
-
 
 
 void actors:: drawActor()

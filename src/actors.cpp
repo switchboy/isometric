@@ -374,6 +374,7 @@ actors::actors(int type, int actorX, int actorY, int actorTeam, int actorId)
     this->offSetY = 0.0f;
     currentGame.occupiedByActorList[actorX][actorY] = actorId;
     listOfPlayers[actorTeam].addToCurrentPopulation(1);
+    this->initialized = true;
 }
 
 actors::~actors()
@@ -501,129 +502,356 @@ int newOrientation(int oldOrientation, int desiredOrientation)
 
 void actors::update()
 {
-    if(this->goalNeedsUpdate)
+    if(this->initialized)
     {
-        this->pathFound = false;
-        this->busyWalking = false;
-        this->route.clear();
-        this->retries = 0;
-        if(this->waitForAmountOfFrames == 0)
+        if(this->goalNeedsUpdate)
         {
-            this->routeNeedsPath = true;
-            this->goalNeedsUpdate = false;
-        }
-        else
-        {
-            this->waitForAmountOfFrames += -1;
-        }
-    }
-    else if(!this->routeNeedsPath)
-    {
-        if(this->busyWalking && (currentGame.elapsedTime-this->timeLastUpdate) > 1.0f)
-        {
+            this->pathFound = false;
             this->busyWalking = false;
-            this->movedMoreThanHalf = false;
-            this->actorCords[0] = this->actorGoal[0];
-            this->actorCords[1] = this->actorGoal[1];
-            currentGame.movedFromByActorList[this->actorCords[0]][this->actorCords[1]] = -1;
-        }
-        else if(this->busyWalking && (currentGame.elapsedTime-this->timeLastUpdate) > 0.5f && !this->movedMoreThanHalf)
-        {
-            currentGame.occupiedByActorList[this->actorCords[0]][this->actorCords[1]] = -1;
-            currentGame.movedFromByActorList[this->actorCords[0]][this->actorCords[1]] = this->actorId;
-            this->movedMoreThanHalf = true;
-        }
-
-        if((!this->busyWalking) && this->pathFound &&(!this->route.empty()))
-        {
-            //Deze actor heeft een doel, dit doel is nog niet bereikt en is klaar met het vorige stuk lopen!
-            int wantedOrientation = actorOrientation(this->actorCords[0], this->actorCords[1], this->route.back().positionX, this->route.back().positionY);
-            if(wantedOrientation == this->orientation)
+            this->route.clear();
+            this->retries = 0;
+            if(this->waitForAmountOfFrames == 0)
             {
-                if(this->isGatheringRecources && this->route.size() == 1)
+                this->routeNeedsPath = true;
+                this->goalNeedsUpdate = false;
+            }
+            else
+            {
+                this->waitForAmountOfFrames += -1;
+            }
+        }
+        else if(!this->routeNeedsPath)
+        {
+            if(this->busyWalking && (currentGame.elapsedTime-this->timeLastUpdate) > 1.0f)
+            {
+                this->busyWalking = false;
+                this->movedMoreThanHalf = false;
+                this->actorCords[0] = this->actorGoal[0];
+                this->actorCords[1] = this->actorGoal[1];
+                currentGame.movedFromByActorList[this->actorCords[0]][this->actorCords[1]] = -1;
+            }
+            else if(this->busyWalking && (currentGame.elapsedTime-this->timeLastUpdate) > 0.5f && !this->movedMoreThanHalf)
+            {
+                currentGame.occupiedByActorList[this->actorCords[0]][this->actorCords[1]] = -1;
+                currentGame.movedFromByActorList[this->actorCords[0]][this->actorCords[1]] = this->actorId;
+                this->movedMoreThanHalf = true;
+            }
+
+            if((!this->busyWalking) && this->pathFound &&(!this->route.empty()))
+            {
+                //Deze actor heeft een doel, dit doel is nog niet bereikt en is klaar met het vorige stuk lopen!
+                int wantedOrientation = actorOrientation(this->actorCords[0], this->actorCords[1], this->route.back().positionX, this->route.back().positionY);
+                if(wantedOrientation == this->orientation)
                 {
-                    this->pathFound = false;
-                    this->commonGoal = false;
-                    this->route.clear();
-                    if(this->isWalkingToUnloadingPoint)
+                    if(this->isGatheringRecources && this->route.size() == 1)
                     {
-                        this->reachedUnloadingPoint = true;
-                    }
-                }
-                else
-                {
-                    //De actor staat met zijn neus de goede kant op en kan dus gaan lopen als de tegel vrij is!
-                    if(currentGame.occupiedByActorList[this->route.back().positionX][this->route.back().positionY] == -1)
-                    {
-                        this->retries = 0;
-                        this->busyWalking = true;
-                        this->timeLastUpdate = currentGame.elapsedTime;
-                        this->actorGoal[0] = this->route.back().positionX;
-                        this->actorGoal[1] = this->route.back().positionY;
-                        currentGame.occupiedByActorList[this->route.back().positionX][this->route.back().positionY] = this->actorId;
-                        this->route.pop_back();
-                        if(route.empty())
+                        this->pathFound = false;
+                        this->commonGoal = false;
+                        this->route.clear();
+                        if(this->isWalkingToUnloadingPoint)
                         {
-                            this->pathFound = false;
-                            this->commonGoal = false;
-                            if(this->isWalkingToUnloadingPoint)
-                            {
-                                this->reachedUnloadingPoint = true;
-                            }
-                        }
-                    }
-                    else if(retries < 5)
-                    {
-                        if(currentGame.elapsedTime-this->timeLastAttempt > 1)
-                        {
-                            //there is a problem; do nothing this frame but calculate an alternative route!
-                            this->actorGoal[0] = this->route.front().positionX;
-                            this->actorGoal[1] = this->route.front().positionY;
-                            this->routeNeedsPath = true;
-                            this->retries += +1;
-                            this->timeLastAttempt = currentGame.elapsedTime;
+                            this->reachedUnloadingPoint = true;
                         }
                     }
                     else
                     {
-                        this->pathFound = false;
-                        this->route.clear();
-                        this->commonGoal = false;
-                        this->retries = 0;
+                        //De actor staat met zijn neus de goede kant op en kan dus gaan lopen als de tegel vrij is!
+                        if(currentGame.occupiedByActorList[this->route.back().positionX][this->route.back().positionY] == -1)
+                        {
+                            this->retries = 0;
+                            this->busyWalking = true;
+                            this->timeLastUpdate = currentGame.elapsedTime;
+                            this->actorGoal[0] = this->route.back().positionX;
+                            this->actorGoal[1] = this->route.back().positionY;
+                            currentGame.occupiedByActorList[this->route.back().positionX][this->route.back().positionY] = this->actorId;
+                            this->route.pop_back();
+                            if(route.empty())
+                            {
+                                this->pathFound = false;
+                                this->commonGoal = false;
+                                if(this->isWalkingToUnloadingPoint)
+                                {
+                                    this->reachedUnloadingPoint = true;
+                                }
+                            }
+                        }
+                        else if(retries < 5)
+                        {
+                            if(currentGame.elapsedTime-this->timeLastAttempt > 1)
+                            {
+                                //there is a problem; do nothing this frame but calculate an alternative route!
+                                this->actorGoal[0] = this->route.front().positionX;
+                                this->actorGoal[1] = this->route.front().positionY;
+                                this->routeNeedsPath = true;
+                                this->retries += +1;
+                                this->timeLastAttempt = currentGame.elapsedTime;
+                            }
+                        }
+                        else
+                        {
+                            this->pathFound = false;
+                            this->route.clear();
+                            this->commonGoal = false;
+                            this->retries = 0;
+                        }
                     }
                 }
-            }
-            else
-            {
-                //De actor moet eerst draaien voordat hij kan gaan lopen
-                this->orientation = newOrientation(this->orientation, wantedOrientation);
-            }
-        }
-        else if(this->isGatheringRecources && (!this->busyWalking)&& this->route.empty())
-        {
-            int northSouth;
-            int eastWest;
-            int diagonalX;
-            int diagonalY;
-            if(this->ResourceBeingGatherd == 0)
-            {
-                northSouth = 22;
-                eastWest = 55;
-                diagonalX = 21;
-                diagonalY = 12;
-            }
-            else
-            {
-                northSouth = 11;
-                eastWest = 27;
-                diagonalX = 11;
-                diagonalY = 6;
-            }
-            if(this->hasToUnloadResource)
-            {
-                if(!this->isBackAtOwnSquare)
+                else
                 {
-                    if(this->timeStartedWalkingToRecource == 0.0f)
+                    //De actor moet eerst draaien voordat hij kan gaan lopen
+                    this->orientation = newOrientation(this->orientation, wantedOrientation);
+                }
+            }
+            else if(this->isGatheringRecources && (!this->busyWalking)&& this->route.empty())
+            {
+                int northSouth;
+                int eastWest;
+                int diagonalX;
+                int diagonalY;
+                if(this->ResourceBeingGatherd == 0)
+                {
+                    northSouth = 22;
+                    eastWest = 55;
+                    diagonalX = 21;
+                    diagonalY = 12;
+                }
+                else
+                {
+                    northSouth = 11;
+                    eastWest = 27;
+                    diagonalX = 11;
+                    diagonalY = 6;
+                }
+                if(this->hasToUnloadResource)
+                {
+                    if(!this->isBackAtOwnSquare)
+                    {
+                        if(this->timeStartedWalkingToRecource == 0.0f)
+                        {
+                            this->timeStartedWalkingToRecource = currentGame.elapsedTime;
+                        }
+                        else if(currentGame.elapsedTime - this->timeStartedWalkingToRecource < 0.5f)
+                        {
+                            //0 N       0   degrees     = x-1  y-1
+                            //1 NE      45  degrees     = x    y-1
+                            //2 E       90  degrees     = x+1  y-1
+                            //3 SE      135 degrees     = x+1  y
+                            //4 S       180 degrees     = x+1  y+1
+                            //5 SW      225 degrees     = x    y+1
+                            //6 W       270 degrees     = x-1  y+1
+                            //7 NW      315 degrees     = x-1  y
+                            switch(this->orientation)
+                            {
+                            case 0:
+                                this->offSetX = 0;
+                                this->offSetY = -northSouth+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
+                                break;
+                            case 1:
+                                this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+                                this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                                break;
+                            case 2:
+                                this->offSetX = eastWest-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
+                                this->offSetY = 0;
+                                break;
+                            case 3:
+                                this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+                                this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                                break;
+                            case 4:
+                                this->offSetX = 0;
+                                this->offSetY = northSouth-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
+                                break;
+                            case 5:
+                                this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+                                this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                                break;
+                            case 6:
+                                this->offSetX = -eastWest+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
+                                this->offSetY = 0;
+                                break;
+                            case 7:
+                                this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+                                this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            this->isBackAtOwnSquare = true;
+                            this->isAtRecource = false;
+                            this->timeStartedWalkingToRecource = 0.0f;
+                            this->timeStartedGatheringRecource = currentGame.elapsedTime;
+                            this->offSetX = 0;
+                            this->offSetY = 0;
+                        }
+
+
+                    }
+                    else
+                    {
+                        if(!this->isWalkingToUnloadingPoint)
+                        {
+                            //search the nearest unloading point an walk there
+                            this->dropOffTile = findNearestDropOffPoint(this->ResourceBeingGatherd);
+                            if(this->dropOffTile.isSet)
+                            {
+                                updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
+                                this->isWalkingToUnloadingPoint = true;
+                                this->reachedUnloadingPoint = false;
+                            }
+                            else
+                            {
+                                //There is no dropoff point!
+                            }
+                        }
+                        else if(this->reachedUnloadingPoint)
+                        {
+                            switch(listOfBuildings[this->dropOffTile.buildingId].getRecievesWhichResources())
+                            {
+                            case 0:
+                                //recieves only wood
+                                listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
+                                this->amountOfWood = 0;
+                                break;
+                            case 1:
+                                //recieves only food
+                                listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
+                                this->amountOfFood = 0;
+                                break;
+                            case 2:
+                                //recieves only stone
+                                listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
+                                this->amountOfStone = 0;
+                                break;
+                            case 3:
+                                //recieves only gold
+                                listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
+                                this->amountOfGold = 0;
+                                break;
+                            case 4:
+                                //recieves all the resources!
+                                listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
+                                this->amountOfWood = 0;
+                                listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
+                                this->amountOfFood = 0;
+                                listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
+                                this->amountOfStone = 0;
+                                listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
+                                this->amountOfGold = 0;
+                                break;
+                            }
+                            if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
+                            {
+                                this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
+                                this->isWalkingToUnloadingPoint = false;
+                                this->isAtCarryCapacity = false;
+                                this->carriesRecources = false;
+                                this->isAtRecource = false;
+                                this->hasToUnloadResource = false;
+                                this->timeStartedWalkingToRecource = 0.0f;
+                            }
+                            else
+                            {
+                                //vind binnen 20 tegels de dichtbijzijnde van dezelfde resource
+                                int lowSearchLimitX = this->actorCords[0]-10;
+                                if(lowSearchLimitX < 0)
+                                {
+                                    lowSearchLimitX = 0;
+                                }
+                                int lowSearchLimitY = this->actorCords[1]-10;
+                                if(lowSearchLimitY < 0)
+                                {
+                                    lowSearchLimitY = 0;
+                                }
+                                int highSearchLimitX = this->actorCords[0]+10;
+                                if(highSearchLimitX > MAP_WIDTH)
+                                {
+                                    highSearchLimitX = MAP_WIDTH;
+                                }
+                                int highSearchLimitY = this->actorCords[0]+10;
+                                if(highSearchLimitY > MAP_HEIGHT)
+                                {
+                                    highSearchLimitY = MAP_HEIGHT;
+                                }
+                                nearestBuildingTile nearestObject;
+                                nearestObject = {0,0,0,0,false};
+                                for(int i = lowSearchLimitX; i < highSearchLimitX; i++)
+                                {
+                                    for(int j = lowSearchLimitY; j < highSearchLimitY; j++)
+                                    {
+                                        if(currentGame.objectLocationList[i][j] != -1)
+                                        {
+                                            if(listOfObjects[currentGame.objectLocationList[i][j]].getTypeOfResource() == this->ResourceBeingGatherd)
+                                            {
+                                                float tempDeltaDistance = dist(this->actorCords[0], this->actorCords[1], i, j);
+                                                if(!nearestObject.isSet)
+                                                {
+                                                    nearestObject = {tempDeltaDistance, i, j,currentGame.objectLocationList[i][j], true};
+                                                }
+                                                else if(tempDeltaDistance < nearestObject.deltaDistance)
+                                                {
+                                                    nearestObject = {tempDeltaDistance, i, j,currentGame.objectLocationList[i][j], true};
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if(nearestObject.isSet)
+                                {
+                                    this->gatheringResourcesAt[0] = nearestObject.locationX;
+                                    this->gatheringResourcesAt[1] = nearestObject.locationY;
+                                }
+                                else
+                                {
+                                    this->isGatheringRecources = false;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //verzamel recources
+                    if(this->isAtRecource)
+                    {
+                        if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
+                        {
+                            if(currentGame.elapsedTime - this->timeStartedGatheringRecource > 2)
+                            {
+                                switch(this->ResourceBeingGatherd)
+                                {
+                                case 0:  //wood
+                                    this->amountOfWood += +1;
+                                    break;
+                                case 1: //food
+                                    this->amountOfFood += +1;
+                                    break;
+                                case 2: //stone
+                                    this->amountOfStone += +1;
+                                    break;
+                                case 3: // gold
+                                    this->amountOfGold += +1;
+                                    break;
+                                }
+                                listOfObjects[currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].substractResource();
+                                this->carriesRecources = true;
+                                if((this->amountOfFood == 10) || (this->amountOfWood == 10) ||(this->amountOfStone == 10) ||(this->amountOfGold == 10) )
+                                {
+                                    this->hasToUnloadResource = true;
+                                    this->isAtRecource = false;
+                                }
+                                this->timeStartedGatheringRecource = currentGame.elapsedTime;
+                            }
+                        }
+                        else
+                        {
+                            //resource not here!
+                            this->hasToUnloadResource = true;
+                            this->isAtRecource = false;
+                        }
+                    }
+                    else if(this->timeStartedWalkingToRecource == 0.0f)
                     {
                         this->timeStartedWalkingToRecource = currentGame.elapsedTime;
                     }
@@ -641,319 +869,95 @@ void actors::update()
                         {
                         case 0:
                             this->offSetX = 0;
-                            this->offSetY = -northSouth+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
+                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth*-1;
                             break;
                         case 1:
-                            this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                            this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
                             break;
                         case 2:
-                            this->offSetX = eastWest-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
+                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
                             this->offSetY = 0;
                             break;
                         case 3:
-                            this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                            this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
                             break;
                         case 4:
                             this->offSetX = 0;
-                            this->offSetY = northSouth-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
+                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
                             break;
                         case 5:
-                            this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                            this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
+                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
                             break;
                         case 6:
-                            this->offSetX = -eastWest+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
+                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest*-1;
                             this->offSetY = 0;
                             break;
                         case 7:
-                            this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                            this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
+                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
                             break;
                         }
                     }
                     else
                     {
-                        this->isBackAtOwnSquare = true;
-                        this->isAtRecource = false;
+                        this->isAtRecource = true;
                         this->timeStartedWalkingToRecource = 0.0f;
                         this->timeStartedGatheringRecource = currentGame.elapsedTime;
-                        this->offSetX = 0;
-                        this->offSetY = 0;
-                    }
-
-
-                }
-                else
-                {
-                    if(!this->isWalkingToUnloadingPoint)
-                    {
-                        //search the nearest unloading point an walk there
-                        this->dropOffTile = findNearestDropOffPoint(this->ResourceBeingGatherd);
-                        if(this->dropOffTile.isSet)
-                        {
-                            updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
-                            this->isWalkingToUnloadingPoint = true;
-                            this->reachedUnloadingPoint = false;
-                        }
-                        else
-                        {
-                            //There is no dropoff point!
-                        }
-                    }
-                    else if(this->reachedUnloadingPoint)
-                    {
-                        switch(listOfBuildings[this->dropOffTile.buildingId].getRecievesWhichResources())
+                        switch(this->orientation)
                         {
                         case 0:
-                            //recieves only wood
-                            listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
-                            this->amountOfWood = 0;
+                            this->offSetX = 0;
+                            this->offSetY = -northSouth;
                             break;
                         case 1:
-                            //recieves only food
-                            listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
-                            this->amountOfFood = 0;
+                            this->offSetX = diagonalX;
+                            this->offSetY = -diagonalY;
                             break;
                         case 2:
-                            //recieves only stone
-                            listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
-                            this->amountOfStone = 0;
+                            this->offSetX = eastWest;
+                            this->offSetY = 0;
                             break;
                         case 3:
-                            //recieves only gold
-                            listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
-                            this->amountOfGold = 0;
+                            this->offSetX = diagonalX;
+                            this->offSetY = diagonalY;
                             break;
                         case 4:
-                            //recieves all the resources!
-                            listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
-                            this->amountOfWood = 0;
-                            listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
-                            this->amountOfFood = 0;
-                            listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
-                            this->amountOfStone = 0;
-                            listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
-                            this->amountOfGold = 0;
+                            this->offSetX = 0;
+                            this->offSetY = northSouth;
                             break;
-                        }
-                        if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
-                        {
-                            this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
-                            this->isWalkingToUnloadingPoint = false;
-                            this->isAtCarryCapacity = false;
-                            this->carriesRecources = false;
-                            this->isAtRecource = false;
-                            this->hasToUnloadResource = false;
-                            this->timeStartedWalkingToRecource = 0.0f;
-                        }
-                        else
-                        {
-                            //vind binnen 20 tegels de dichtbijzijnde van dezelfde resource
-                            int lowSearchLimitX = this->actorCords[0]-10;
-                            if(lowSearchLimitX < 0)
-                            {
-                                lowSearchLimitX = 0;
-                            }
-                            int lowSearchLimitY = this->actorCords[1]-10;
-                            if(lowSearchLimitY < 0)
-                            {
-                                lowSearchLimitY = 0;
-                            }
-                            int highSearchLimitX = this->actorCords[0]+10;
-                            if(highSearchLimitX > MAP_WIDTH)
-                            {
-                                highSearchLimitX = MAP_WIDTH;
-                            }
-                            int highSearchLimitY = this->actorCords[0]+10;
-                            if(highSearchLimitY > MAP_HEIGHT)
-                            {
-                                highSearchLimitY = MAP_HEIGHT;
-                            }
-                            nearestBuildingTile nearestObject;
-                            nearestObject = {0,0,0,0,false};
-                            for(int i = lowSearchLimitX; i < highSearchLimitX; i++)
-                            {
-                                for(int j = lowSearchLimitY; j < highSearchLimitY; j++)
-                                {
-                                    if(currentGame.objectLocationList[i][j] != -1)
-                                    {
-                                        if(listOfObjects[currentGame.objectLocationList[i][j]].getTypeOfResource() == this->ResourceBeingGatherd)
-                                        {
-                                            float tempDeltaDistance = dist(this->actorCords[0], this->actorCords[1], i, j);
-                                            if(!nearestObject.isSet)
-                                            {
-                                                nearestObject = {tempDeltaDistance, i, j,currentGame.objectLocationList[i][j], true};
-                                            }
-                                            else if(tempDeltaDistance < nearestObject.deltaDistance)
-                                            {
-                                                nearestObject = {tempDeltaDistance, i, j,currentGame.objectLocationList[i][j], true};
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if(nearestObject.isSet)
-                            {
-                                this->gatheringResourcesAt[0] = nearestObject.locationX;
-                                this->gatheringResourcesAt[1] = nearestObject.locationY;
-                            }
-                            else
-                            {
-                                this->isGatheringRecources = false;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                //verzamel recources
-                if(this->isAtRecource)
-                {
-                    if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
-                    {
-                        if(currentGame.elapsedTime - this->timeStartedGatheringRecource > 2)
-                        {
-                            switch(this->ResourceBeingGatherd)
-                            {
-                            case 0:  //wood
-                                this->amountOfWood += +1;
-                                break;
-                            case 1: //food
-                                this->amountOfFood += +1;
-                                break;
-                            case 2: //stone
-                                this->amountOfStone += +1;
-                                break;
-                            case 3: // gold
-                                this->amountOfGold += +1;
-                                break;
-                            }
-                            listOfObjects[currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].substractResource();
-                            this->carriesRecources = true;
-                            if((this->amountOfFood == 10) || (this->amountOfWood == 10) ||(this->amountOfStone == 10) ||(this->amountOfGold == 10) )
-                            {
-                                this->hasToUnloadResource = true;
-                                this->isAtRecource = false;
-                            }
-                            this->timeStartedGatheringRecource = currentGame.elapsedTime;
-                        }
-                    }
-                    else
-                    {
-                        //resource not here!
-                        this->hasToUnloadResource = true;
-                        this->isAtRecource = false;
-                    }
-                }
-                else if(this->timeStartedWalkingToRecource == 0.0f)
-                {
-                    this->timeStartedWalkingToRecource = currentGame.elapsedTime;
-                }
-                else if(currentGame.elapsedTime - this->timeStartedWalkingToRecource < 0.5f)
-                {
-                    //0 N       0   degrees     = x-1  y-1
-                    //1 NE      45  degrees     = x    y-1
-                    //2 E       90  degrees     = x+1  y-1
-                    //3 SE      135 degrees     = x+1  y
-                    //4 S       180 degrees     = x+1  y+1
-                    //5 SW      225 degrees     = x    y+1
-                    //6 W       270 degrees     = x-1  y+1
-                    //7 NW      315 degrees     = x-1  y
-                    switch(this->orientation)
-                    {
-                    case 0:
-                        this->offSetX = 0;
-                        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth*-1;
-                        break;
-                    case 1:
-                        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
-                        break;
-                    case 2:
-                        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
-                        this->offSetY = 0;
-                        break;
-                    case 3:
-                        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                        break;
-                    case 4:
-                        this->offSetX = 0;
-                        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
-                        break;
-                    case 5:
-                        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
-                        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                        break;
-                    case 6:
-                        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest*-1;
-                        this->offSetY = 0;
-                        break;
-                    case 7:
-                        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
-                        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
-                        break;
-                    }
-                }
-                else
-                {
-                    this->isAtRecource = true;
-                    this->timeStartedWalkingToRecource = 0.0f;
-                    this->timeStartedGatheringRecource = currentGame.elapsedTime;
-                    switch(this->orientation)
-                    {
-                    case 0:
-                        this->offSetX = 0;
-                        this->offSetY = -northSouth;
-                        break;
-                    case 1:
-                        this->offSetX = diagonalX;
-                        this->offSetY = -diagonalY;
-                        break;
-                    case 2:
-                        this->offSetX = eastWest;
-                        this->offSetY = 0;
-                        break;
-                    case 3:
-                        this->offSetX = diagonalX;
-                        this->offSetY = diagonalY;
-                        break;
-                    case 4:
-                        this->offSetX = 0;
-                        this->offSetY = northSouth;
-                        break;
-                    case 5:
-                        this->offSetX = -diagonalX;
-                        this->offSetY = diagonalY;
-                        break;
-                    case 6:
-                        this->offSetX = -eastWest;
-                        this->offSetY = 0;
-                        break;
-                    case 7:
-                        this->offSetX = -diagonalX;
-                        this->offSetY = -diagonalY;
-                        break;
+                        case 5:
+                            this->offSetX = -diagonalX;
+                            this->offSetY = diagonalY;
+                            break;
+                        case 6:
+                            this->offSetX = -eastWest;
+                            this->offSetY = 0;
+                            break;
+                        case 7:
+                            this->offSetX = -diagonalX;
+                            this->offSetY = -diagonalY;
+                            break;
 
+                        }
                     }
                 }
             }
-        }
-        if(commonGoal && !pathFound && retries < 6 && currentGame.elapsedTime-this->timeLastAttempt > 1)
-        {
-            this->routeNeedsPath = true;
-            this->retries += +1;
-            this->timeLastAttempt = currentGame.elapsedTime;
-        }
-        if(this->retries == 5)
-        {
-            this->pathFound = false;
-            this->route.clear();
-            this->commonGoal = false;
-            this->retries = 0;
+            if(commonGoal && !pathFound && retries < 6 && currentGame.elapsedTime-this->timeLastAttempt > 1)
+            {
+                this->routeNeedsPath = true;
+                this->retries += +1;
+                this->timeLastAttempt = currentGame.elapsedTime;
+            }
+            if(this->retries == 5)
+            {
+                this->pathFound = false;
+                this->route.clear();
+                this->commonGoal = false;
+                this->retries = 0;
+            }
         }
     }
 }
@@ -1027,7 +1031,7 @@ void actors::pathAStar()
     int startCell = (actorCords[0]*MAP_HEIGHT)+actorCords[1]; //eigen positie
     int endCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
     updateCells(endCell, startCell, cellsList);
-    std::list<Cells> listToCheck;
+    std::list<Cells*> listToCheck;
     bool endReached = false;
 
     //check of de doelcel niet 1 hokje weg is
@@ -1048,19 +1052,19 @@ void actors::pathAStar()
         this->pathFound = false;
         addNeighbours(startCell, cellsList);
         cellsList[startCell].visited = true;
-        listToCheck.push_back(cellsList[startCell]);
+        listToCheck.push_back(&cellsList[startCell]);
     }
 
     while(!listToCheck.empty() && startCell != endCell)
     {
         //sorteer de lijst en zet de cell met de laagste cost to goal bovenaan om het eerst te testen
-        listToCheck.sort([](const Cells &f, const Cells &s)
+        listToCheck.sort([](const Cells* f, const Cells* s)
         {
-            return f.totalCostGuess < s.totalCostGuess;
+            return f->totalCostGuess < s->totalCostGuess;
         });
 
         //Check of de te checken cell het doel is. Als dat zo is zijn we klaar
-        if(listToCheck.front().cellId == endCell)
+        if((*listToCheck.front()).cellId == endCell)
         {
             listToCheck.clear();
             this->pathFound = true;
@@ -1073,9 +1077,9 @@ void actors::pathAStar()
         {
             for(int q = 0; q < 8; q++)
             {
-                if(listToCheck.front().neighbours[q] != -1)
+                if((*listToCheck.front()).neighbours[q] != -1)
                 {
-                    int newCellId = listToCheck.front().neighbours[q];
+                    int newCellId = (*listToCheck.front()).neighbours[q];
                     //We have found neighbours!
                     //check if neighbours was found before
                     if(!cellsList[newCellId].visited)
@@ -1083,11 +1087,11 @@ void actors::pathAStar()
                         //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
                         addNeighbours(newCellId, cellsList);
                         //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
-                        cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                        cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
                         //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
-                        cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                        cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
                         //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
-                        listToCheck.push_back(cellsList[newCellId]);
+                        listToCheck.push_back(&cellsList[newCellId]);
                         //Bereken de afstand naar het doel
                         cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
                         cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
@@ -1096,11 +1100,11 @@ void actors::pathAStar()
                     else
                     {
                         //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
-                        if(listToCheck.front().cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
+                        if((*listToCheck.front()).cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
                         {
                             //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
-                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
-                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
+                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
                             cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
                         }
                     }
@@ -1141,8 +1145,8 @@ void actors::pathAStarBiDi()
     int endCell = (actorGoal[0]*MAP_HEIGHT)+actorGoal[1]; //doel positie
     int collisionCell = -1;
     updateCells(endCell, startCell, cellsList);
-    std::list<Cells> listToCheck;
-    std::list<Cells> listToCheckBack;
+    std::list<Cells*> listToCheck;
+    std::list<Cells*> listToCheckBack;
     bool endReached = false;
 
     //check of de doelcel niet 1 hokje weg is
@@ -1165,22 +1169,25 @@ void actors::pathAStarBiDi()
         addNeighbours(endCell, cellsList);
         cellsList[startCell].visited = true;
         cellsList[endCell].visitedBack = true;
-        listToCheck.push_back(cellsList[startCell]);
-        listToCheckBack.push_back(cellsList[endCell]);
-        std::cout << endCell << " - " << listToCheckBack.front().cellId << " | " << startCell << " - " << listToCheck.front().cellId << "\n";
+        listToCheck.push_back(&cellsList[startCell]);
+        listToCheckBack.push_back(&cellsList[endCell]);
+        std::cout << endCell << " - " << (*listToCheckBack.front()).cellId << " | " << startCell << " - " << (*listToCheck.front()).cellId << "\n";
     }
 
 
     while((!listToCheck.empty() && !listToCheckBack.empty()) && startCell != endCell)
     {
         //sorteer de lijst en zet de cell met de laagste cost to goal bovenaan om het eerst te testen
-        listToCheck.sort([](const Cells &f, const Cells &s)
+
+
+        listToCheck.sort([](const Cells* f, const Cells* s)
         {
-            return f.totalCostGuess < s.totalCostGuess;
+            return f->totalCostGuess < s->totalCostGuess;
         });
-        listToCheckBack.sort([](const Cells &f, const Cells &s)
+
+        listToCheckBack.sort([](const Cells* f, const Cells* s)
         {
-            return f.totalCostGuess < s.totalCostGuess;
+            return f->totalCostGuess < s->totalCostGuess;
         });
 
         if(collisionCell != -1)
@@ -1189,13 +1196,13 @@ void actors::pathAStarBiDi()
             listToCheckBack.clear();
             this->pathFound = true;
         } //Check of de te checken cell het doel is. Als dat zo is zijn we klaar
-        else if(listToCheck.front().cellId == endCell)
+        else if((*listToCheck.front()).cellId == endCell)
         {
             listToCheck.clear();
             listToCheckBack.clear();
             this->pathFound = true;
         }
-        else if(listToCheckBack.front().cellId == startCell)
+        else if((*listToCheckBack.front()).cellId == startCell)
         {
             listToCheck.clear();
             listToCheckBack.clear();
@@ -1210,10 +1217,10 @@ void actors::pathAStarBiDi()
         {
             for(int q = 0; q < 8; q++)
             {
-                if(listToCheck.front().neighbours[q] != -1)
+                if((*listToCheck.front()).neighbours[q] != -1)
                 {
                     //We have found neighbours!
-                    int newCellId = listToCheck.front().neighbours[q];
+                    int newCellId = (*listToCheck.front()).neighbours[q];
                     //check if neighbours was found before
                     if(!cellsList[newCellId].visited)
                     {
@@ -1222,11 +1229,11 @@ void actors::pathAStarBiDi()
                             //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
                             addNeighbours(newCellId, cellsList);
                             //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
-                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
                             //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
-                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
                             //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
-                            listToCheck.push_back(cellsList[newCellId]);
+                            listToCheck.push_back(&cellsList[newCellId]);
                             //Bereken de afstand naar het doel
                             cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
                             cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
@@ -1238,7 +1245,7 @@ void actors::pathAStarBiDi()
                             collisionCell = newCellId;
                             cellsList[newCellId].visited = true;
                             cellsList[newCellId].visitedBack = true;
-                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
+                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
                             q = 8;
                         }
 
@@ -1246,19 +1253,19 @@ void actors::pathAStarBiDi()
                     else
                     {
                         //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
-                        if(listToCheck.front().cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
+                        if((*listToCheck.front()).cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
                         {
                             //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
-                            cellsList[newCellId].parentCellId = listToCheck.front().cellId;
-                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
+                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
                             cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
                         }
                     }
                 }
-                if(listToCheckBack.front().neighbours[q] != -1 && q != 8)
+                if((*listToCheckBack.front()).neighbours[q] != -1 && q != 8)
                 {
                     //We have found neighbours!
-                    int newCellId = listToCheckBack.front().neighbours[q];
+                    int newCellId = (*listToCheckBack.front()).neighbours[q];
                     //check if neighbours was found before
                     if(!cellsList[newCellId].visitedBack)
                     {
@@ -1267,11 +1274,11 @@ void actors::pathAStarBiDi()
                             //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
                             addNeighbours(newCellId, cellsList);
                             //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
-                            cellsList[newCellId].backParent = listToCheckBack.front().cellId;
+                            cellsList[newCellId].backParent = (*listToCheckBack.front()).cellId;
                             //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
-                            cellsList[newCellId].cummulativeCost = listToCheckBack.front().cummulativeCost+1;
+                            cellsList[newCellId].cummulativeCost = (*listToCheckBack.front()).cummulativeCost+1;
                             //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
-                            listToCheckBack.push_back(cellsList[newCellId]);
+                            listToCheckBack.push_back(&cellsList[newCellId]);
                             //Bereken de afstand naar het doel
                             cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[startCell].positionX,cellsList[startCell].positionY);
                             cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
@@ -1283,18 +1290,18 @@ void actors::pathAStarBiDi()
                             collisionCell = newCellId;
                             cellsList[newCellId].visited = true;
                             cellsList[newCellId].visitedBack = true;
-                            cellsList[newCellId].backParent = listToCheckBack.front().cellId;
+                            cellsList[newCellId].backParent = (*listToCheckBack.front()).cellId;
                             q = 8;
                         }
                     }
                     else
                     {
                         //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
-                        if(listToCheck.front().cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
+                        if((*listToCheck.front()).cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
                         {
                             //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
-                            cellsList[newCellId].backParent = listToCheck.front().cellId;
-                            cellsList[newCellId].cummulativeCost = listToCheck.front().cummulativeCost+1;
+                            cellsList[newCellId].backParent = (*listToCheck.front()).cellId;
+                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
                             cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
                         }
                     }

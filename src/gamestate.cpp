@@ -889,15 +889,6 @@ void gameState::drawMouseInteraction()
     }
 }
 
-
-
-
-void gameState::update()
-{
-
-}
-
-
 mouseWorldCord gameState::getNextCord(int x, int y)
 {
     if(!this->firstRound && this->roundDone)
@@ -964,13 +955,9 @@ mouseWorldCord gameState::getNextCord(int x, int y)
     }
 }
 
-void gameState::drawMiniMap()
-{
-    window.setView(miniMap);
-    sf::RectangleShape miniMapPixel(sf::Vector2f(20.f,10.f));
-    if(!minimapTextureExist)
+drawMiniMapBackground(sf::RectangleShape& miniMapPixel){
+     if(!minimapTextureExist)
     {
-        minimapTexture.create(20*MAP_WIDTH,10*MAP_HEIGHT);
         minimapTexture.clear(sf::Color(0,0,0,0));
         for(int j = 0; j < MAP_HEIGHT; j++)
         {
@@ -1045,10 +1032,191 @@ void gameState::drawMiniMap()
         minimapTexture.display();
         minimapTextureExist = true;
     }
+}
+
+sf::RenderTexture minimapBuildingsTexture;
+sf::RenderTexture minimapActorsTexture;
+sf::RenderTexture minimapObjectsTexture;
+
+bool noNewBuildings;
+
+drawMiniMapBuildings(sf::RectangleShape& miniMapPixel){
+if(!noNewBuildings){
+    minimapBuildingsTexture.clear(sf::Color(0,0,0,0));
+    for(int j = 0; j < MAP_HEIGHT; j++)
+        {
+            for(int i = 0; i < MAP_WIDTH; i++ )
+            {
+                if(currentGame.occupiedByBuildingList[i][j] != -1){
+                    switch(listOfBuildings[currentGame.occupiedByBuildingList[i][j]].getTeam()){
+                    case 0:
+                        miniMapPixel.setFillColor(sf::Color(0, 0, 255));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                         minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    case 1:
+                        miniMapPixel.setFillColor(sf::Color(0, 255, 0));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    case 2:
+                        miniMapPixel.setFillColor(sf::Color(255, 0, 0));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                         minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    case 3:
+                        miniMapPixel.setFillColor(sf::Color(255, 255, 0 ));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                         minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    case 4:
+                        miniMapPixel.setFillColor(sf::Color(0, 255, 255));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                         minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    case 5:
+                        miniMapPixel.setFillColor(sf::Color(255, 0, 255));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    case 6:
+                        miniMapPixel.setFillColor(sf::Color(255, 127, 0));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    case 7:
+                        miniMapPixel.setFillColor(sf::Color(127, 127, 127));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapBuildingsTexture.draw(miniMapPixel);
+                        break;
+                    }
+                }
+            }
+        }
+     minimapBuildingsTexture.display();
+     noNewBuildings = true;
+    }
+}
+
+
+
+drawMiniMapActors(sf::RectangleShape& miniMapPixel){
+    minimapActorsTexture.clear(sf::Color(0,0,0,0));
+    for(int j = 0; j < MAP_HEIGHT; j++)
+        {
+            for(int i = 0; i < MAP_WIDTH; i++ )
+            {
+                if(currentGame.occupiedByActorList[i][j] != -1){
+                    switch(listOfActors[currentGame.occupiedByActorList[i][j]].getTeam()){
+                    case 0:
+                        miniMapPixel.setFillColor(sf::Color(0, 0, 255));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    case 1:
+                        miniMapPixel.setFillColor(sf::Color(0, 255, 0));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    case 2:
+                        miniMapPixel.setFillColor(sf::Color(255, 0, 0));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    case 3:
+                        miniMapPixel.setFillColor(sf::Color(255, 255, 0 ));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    case 4:
+                        miniMapPixel.setFillColor(sf::Color(0, 255, 255));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    case 5:
+                        miniMapPixel.setFillColor(sf::Color(255, 0, 255));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    case 6:
+                        miniMapPixel.setFillColor(sf::Color(255, 127, 0));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    case 7:
+                        miniMapPixel.setFillColor(sf::Color(127, 127, 127));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapActorsTexture.draw(miniMapPixel);
+                        break;
+                    }
+                }
+            }
+        }
+        minimapActorsTexture.display();
+}
+
+drawMiniMapObjects(sf::RectangleShape& miniMapPixel){
+
+    minimapObjectsTexture.clear(sf::Color(0,0,0,0));
+    for(int j = 0; j < MAP_HEIGHT; j++)
+        {
+            for(int i = 0; i < MAP_WIDTH; i++ )
+            {
+                if(currentGame.objectLocationList[i][j] != -1){
+                    switch(listOfObjects[currentGame.objectLocationList[i][j]].getTypeOfResource()){
+                    case 0:
+                        miniMapPixel.setFillColor(sf::Color(33, 77, 33));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapObjectsTexture.draw(miniMapPixel);
+                        break;
+                    case 1:
+                        miniMapPixel.setFillColor(sf::Color(150, 88, 88));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapObjectsTexture.draw(miniMapPixel);
+                        break;
+                    case 2:
+                        miniMapPixel.setFillColor(sf::Color(65, 65, 65));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapObjectsTexture.draw(miniMapPixel);
+                        break;
+                    case 3:
+                        miniMapPixel.setFillColor(sf::Color(110, 90, 0 ));
+                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                        minimapObjectsTexture.draw(miniMapPixel);
+                        break;
+                    }
+                }
+            }
+        }
+        minimapObjectsTexture.display();
+}
+
+void gameState::drawMiniMap()
+{
+    window.setView(miniMap);
+    sf::RectangleShape miniMapPixel(sf::Vector2f(20.f,10.f));
     sf::Sprite miniMapBackground;
+
+    drawMiniMapBackground(miniMapPixel);
     miniMapBackground.setTexture(minimapTexture.getTexture());
     miniMapBackground.setScale(this->miniMapWidth/(20*MAP_WIDTH), this->miniMapHeigth/(10*MAP_HEIGHT));
     window.draw(miniMapBackground);
+
+    drawMiniMapObjects(miniMapPixel);
+    miniMapBackground.setTexture(minimapObjectsTexture.getTexture());
+    miniMapBackground.setScale(this->miniMapWidth/(20*MAP_WIDTH), this->miniMapHeigth/(10*MAP_HEIGHT));
+    window.draw(miniMapBackground);
+
+    drawMiniMapBuildings(miniMapPixel);
+    miniMapBackground.setTexture(minimapBuildingsTexture.getTexture());
+    miniMapBackground.setScale(this->miniMapWidth/(20*MAP_WIDTH), this->miniMapHeigth/(10*MAP_HEIGHT));
+    window.draw(miniMapBackground);
+
+    drawMiniMapActors(miniMapPixel);
+    miniMapBackground.setTexture(minimapActorsTexture.getTexture());
+    miniMapBackground.setScale(this->miniMapWidth/(20*MAP_WIDTH), this->miniMapHeigth/(10*MAP_HEIGHT));
+    window.draw(miniMapBackground);
+
     sf::RectangleShape viewBox(sf::Vector2f(this->viewBoxX, this->viewBoxY));
     viewBox.setOrigin(sf::Vector2f(viewBoxX/2.f, viewBoxY/2.f));
     viewBox.setFillColor(sf::Color(0,0,0,0));
@@ -1133,6 +1301,10 @@ void gameState::loadGame()
     topBar.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 0.03f));
     toolBar.setViewport(sf::FloatRect(0.f, 0.8f, 1.f, 0.2f));
     miniMap.setViewport(sf::FloatRect(0.8f, 0.8f, 0.2f, 0.2f));
+    minimapTexture.create(20*MAP_WIDTH,10*MAP_HEIGHT);
+    minimapActorsTexture.create(20*MAP_WIDTH,10*MAP_HEIGHT);
+    minimapObjectsTexture.create(20*MAP_WIDTH,10*MAP_HEIGHT);
+    minimapBuildingsTexture.create(20*MAP_WIDTH,10*MAP_HEIGHT);
     this->text.setFont(this->font);
     window.setFramerateLimit(60);
     currentGame.loadTextures();

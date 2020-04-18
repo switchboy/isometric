@@ -21,6 +21,7 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
             currentGame.occupiedByBuildingList[startXlocation-i][startYLocation-j] = buildingId;
         }
     }
+    noNewBuildings = false;
     switch(type)
     {
     case 0:

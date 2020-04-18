@@ -419,7 +419,7 @@
 	<math.h>
 	<list>
 
-1586874541 source:d:\programming\isometric\main.cpp
+1587219239 source:d:\programming\isometric\main.cpp
 	<SFML/Graphics.hpp>
 	<iostream>
 	<vector>
@@ -444,11 +444,11 @@
 
 1584718378 d:\programming\isometric\include\animation.h
 
-1586895233 d:\programming\isometric\include\gamestate.h
+1587224075 d:\programming\isometric\include\gamestate.h
 	<SFML/Graphics.hpp>
 	"globalfunctions.h"
 
-1586895502 source:d:\programming\isometric\src\gamestate.cpp
+1587223025 source:d:\programming\isometric\src\gamestate.cpp
 	"gamestate.h"
 	"buildings.h"
 	"objects.h"
@@ -469,7 +469,7 @@
 	"gamestate.h"
 	"globals.h"
 
-1586882556 source:d:\programming\isometric\src\buildings.cpp
+1587223025 source:d:\programming\isometric\src\buildings.cpp
 	"buildings.h"
 	"gamestate.h"
 	"player.h"
@@ -489,7 +489,7 @@
 
 1584720289 d:\programming\isometric\globals.h
 
-1586881694 source:d:\programming\isometric\src\actors.cpp
+1587221636 source:d:\programming\isometric\src\actors.cpp
 	"actors.h"
 	"objects.h"
 	"player.h"
@@ -498,7 +498,7 @@
 	<future>
 	<mutex>
 
-1586879364 d:\programming\isometric\include\actors.h
+1587221636 d:\programming\isometric\include\actors.h
 	<cmath>
 	<list>
 	"gamestate.h"

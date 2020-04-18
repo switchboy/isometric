@@ -22,6 +22,11 @@ void updateObjectHelper(int i)
     listOfObjects[i].update();
 }
 
+void updateBuildingsHelper(int i)
+{
+    listOfBuildings[i].update();
+}
+
 void routeHelper(int i)
 {
     listOfActors[i].calculateRoute();
@@ -40,6 +45,7 @@ void updateActorsWorker()
         }
     }
 }
+
 void updateObjectsWorker()
 {
     while(window.isOpen())
@@ -49,6 +55,20 @@ void updateObjectsWorker()
             for(int i = 0; i < listOfObjects.size(); i++)
             {
                 std::async(std::launch::async, updateObjectHelper, i);
+            }
+        }
+    }
+}
+
+void updateBuildingsWorker()
+{
+    while(window.isOpen())
+    {
+        if(!listOfBuildings.empty())
+        {
+            for(int i = 0; i < listOfBuildings.size(); i++)
+            {
+                std::async(std::launch::async, updateBuildingsHelper, i);
             }
         }
     }
@@ -74,6 +94,7 @@ int main()
     currentGame.loadGame();
     std::thread updateActorsThread(updateActorsWorker);
     std::thread updateObjectsThread(updateObjectsWorker);
+    std::thread updateBuildingsThread(updateBuildingsWorker);
     std::thread updateRoutesThread(calculateRoutesWorker);
     while(window.isOpen())
     {
@@ -82,6 +103,10 @@ int main()
         currentGame.interact();
         currentGame.drawGame();
     }
+    updateActorsThread.join();
+    updateObjectsThread.join();
+    updateBuildingsThread.join();
+    updateRoutesThread.join();
     return 0;
 }
 

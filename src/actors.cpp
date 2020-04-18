@@ -1009,6 +1009,10 @@ nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
     return nearestDropOffBuilding;
 }
 
+int actors::getTeam(){
+    return this->actorTeam;
+}
+
 void actors::calculateRoute()
 {
     if(this->routeNeedsPath)

@@ -14,7 +14,9 @@ gameState currentGame;
 
 void updateActorHelper(int i)
 {
-    listOfActors[i].update();
+    if(listOfActors[i].isInitialized()){
+        listOfActors[i].update();
+    }
 }
 
 void updateObjectHelper(int i)
@@ -29,7 +31,9 @@ void updateBuildingsHelper(int i)
 
 void routeHelper(int i)
 {
-    listOfActors[i].calculateRoute();
+    if(listOfActors[i].isInitialized()){
+        listOfActors[i].calculateRoute();
+    }
 }
 
 void updateActorsWorker()

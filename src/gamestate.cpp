@@ -172,6 +172,14 @@ void gameState::drawMap()
 
 void gameState::loadTextures()
 {
+    if(textureUIButton.loadFromFile("textures/icons.png"))
+    {
+        spriteUIButton.setTexture(textureUIButton);
+    }
+    else
+    {
+        std::cout << "Error loading texture: gold.png \n" << std::endl;
+    }
     if(textureStone.loadFromFile("textures/stone.png"))
     {
         spriteStone.setTexture(textureStone);

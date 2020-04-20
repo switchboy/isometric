@@ -61,7 +61,9 @@ class actors
         nearestBuildingTile findNearestDropOffPoint(int Resource);
         void pathAStar();
         void pathAStarBiDi();
-
+        bool isInitialized();
+        int getTeam();
+        bool findNearestSimilairResource();
 
 
     private:
@@ -113,6 +115,7 @@ class actors
         float offSetY;
         bool noPathPossible;
         bool routeNeedsPath;
+        bool initialized;
         int mapArray[MAP_HEIGHT*MAP_WIDTH];
         nearestBuildingTile dropOffTile;
         std::list<routeCell> route;

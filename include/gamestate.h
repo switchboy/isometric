@@ -14,6 +14,10 @@ extern sf::View miniMap;
 extern int viewOffsetX;
 extern int viewOffsetY;
 extern sf::RenderTexture minimapTexture;
+extern sf::RenderTexture minimapBuildingsTexture;
+extern sf::RenderTexture minimapActorsTexture;
+extern sf::RenderTexture minimapObjectsTexture;
+extern bool noNewBuildings;
 extern bool minimapTextureExist;
 
 mouseWorldCord toWorldMousePosition(int mouseX, int mouseY);
@@ -40,19 +44,20 @@ public:
     void drawTopBar();
     float elapsedTime;
     bool isPassable(int x, int y);
+    void drawViewBox();
     mouseWorldCord getNextCord(int x, int y);
     sf::Font font;
     sf::Text text;
     sf::Sprite  spriteSelectedTile,spriteSelectedTileForPath, spriteEmptyTile, spriteGrassTile, spriteSandTile, spriteSandTileNE,
     spriteSandTileNW,spriteSandTileSE,spriteSandTileSW, spriteCactusTile, spriteCypressTrileTile,
     spriteNormalTreeTile, spritePineTreeTile, spriteTileObstructed, spriteTownCenter,
-    spriteStone, spriteGold, spriteBerryBush,
+    spriteStone, spriteGold, spriteBerryBush, spriteUIButton,
     spriteWaterTile, spriteBeachTileNE, spriteBeachTileNW,spriteBeachTileSE,spriteBeachTileSW, spriteBuildingHouse, spriteVillager, spriteTotalBackground;
 
     sf::Texture textureSelectedTile, textureSelectedTileForPath, textureEmptyTile, textureGrassTile, textureSandTile, textureSandTileNE,
     textureSandTileNW,textureSandTileSE,textureSandTileSW, textureCactusTile, textureCypressTrileTile,
     textureNormalTreeTile, texturePineTreeTile, textureCheatTile, textureTileObstructed, textureTownCenter,
-    textureStone, textureGold, textureBerryBush,
+    textureStone, textureGold, textureBerryBush, textureUIButton,
     textureWaterTile, textureBeachTileNE, textureBeachTileNW,textureBeachTileSE, textureBeachTileSW, textureBuildingHouse, textureVillager, textureTotalBackground;
     int currentMap[MAP_WIDTH][MAP_HEIGHT];
     int buildingLocationList[MAP_WIDTH][MAP_HEIGHT];

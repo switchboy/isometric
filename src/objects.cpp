@@ -37,7 +37,7 @@ objects::objects(int type, int startXlocation, int startYLocation, int objectId)
     switch(this->typeOfResource)
     {
     case 0:
-        this->resourceLeft = 200;
+        this->resourceLeft = 10;
         break;
     case 1:
         this->resourceLeft = 500;

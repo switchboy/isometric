@@ -4,9 +4,6 @@
 #include "buildings.h"
 #include <iostream>
 #include <future>
-#include <mutex>
-
-std::mutex mtx;
 
 void updateCells(int goalId, int startId, std::vector<Cells>& cellsList)
 {
@@ -575,7 +572,7 @@ void actors::update()
                                 }
                             }
                         }
-                        else if(retries < 5)
+                        else if(this->retries < 5)
                         {
                             if(currentGame.elapsedTime-this->timeLastAttempt > 1)
                             {
@@ -585,6 +582,37 @@ void actors::update()
                                 this->routeNeedsPath = true;
                                 this->retries += +1;
                                 this->timeLastAttempt = currentGame.elapsedTime;
+                            }
+                        }
+                        else if(this->isWalkingToUnloadingPoint)
+                        {
+                            //find new drop off point
+                            this->dropOffTile = findNearestDropOffPoint(this->ResourceBeingGatherd);
+                            if(this->dropOffTile.isSet)
+                            {
+                                updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
+                                this->isWalkingToUnloadingPoint = true;
+                                this->reachedUnloadingPoint = false;
+                            }
+                            else
+                            {
+                                this->pathFound = false;
+                                this->route.clear();
+                                this->commonGoal = false;
+                                this->retries = 0;
+                            }
+                        }
+                        else if(this->isGatheringRecources)
+                        {
+                            if(this->findNearestSimilairResource())
+                            {
+                                this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
+                                this->isWalkingToUnloadingPoint = false;
+                                this->isAtCarryCapacity = false;
+                                this->carriesRecources = false;
+                                this->isAtRecource = false;
+                                this->hasToUnloadResource = false;
+                                this->timeStartedWalkingToRecource = 0.0f;
                             }
                         }
                         else
@@ -754,57 +782,15 @@ void actors::update()
                             else
                             {
                                 //vind binnen 20 tegels de dichtbijzijnde van dezelfde resource
-                                int lowSearchLimitX = this->actorCords[0]-10;
-                                if(lowSearchLimitX < 0)
+                                if(this->findNearestSimilairResource())
                                 {
-                                    lowSearchLimitX = 0;
-                                }
-                                int lowSearchLimitY = this->actorCords[1]-10;
-                                if(lowSearchLimitY < 0)
-                                {
-                                    lowSearchLimitY = 0;
-                                }
-                                int highSearchLimitX = this->actorCords[0]+10;
-                                if(highSearchLimitX > MAP_WIDTH)
-                                {
-                                    highSearchLimitX = MAP_WIDTH;
-                                }
-                                int highSearchLimitY = this->actorCords[0]+10;
-                                if(highSearchLimitY > MAP_HEIGHT)
-                                {
-                                    highSearchLimitY = MAP_HEIGHT;
-                                }
-                                nearestBuildingTile nearestObject;
-                                nearestObject = {0,0,0,0,false};
-                                for(int i = lowSearchLimitX; i < highSearchLimitX; i++)
-                                {
-                                    for(int j = lowSearchLimitY; j < highSearchLimitY; j++)
-                                    {
-                                        if(currentGame.objectLocationList[i][j] != -1)
-                                        {
-                                            if(listOfObjects[currentGame.objectLocationList[i][j]].getTypeOfResource() == this->ResourceBeingGatherd)
-                                            {
-                                                float tempDeltaDistance = dist(this->actorCords[0], this->actorCords[1], i, j);
-                                                if(!nearestObject.isSet)
-                                                {
-                                                    nearestObject = {tempDeltaDistance, i, j,currentGame.objectLocationList[i][j], true};
-                                                }
-                                                else if(tempDeltaDistance < nearestObject.deltaDistance)
-                                                {
-                                                    nearestObject = {tempDeltaDistance, i, j,currentGame.objectLocationList[i][j], true};
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if(nearestObject.isSet)
-                                {
-                                    this->gatheringResourcesAt[0] = nearestObject.locationX;
-                                    this->gatheringResourcesAt[1] = nearestObject.locationY;
-                                }
-                                else
-                                {
-                                    this->isGatheringRecources = false;
+                                    this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
+                                    this->isWalkingToUnloadingPoint = false;
+                                    this->isAtCarryCapacity = false;
+                                    this->carriesRecources = false;
+                                    this->isAtRecource = false;
+                                    this->hasToUnloadResource = false;
+                                    this->timeStartedWalkingToRecource = 0.0f;
                                 }
                             }
                         }
@@ -962,6 +948,9 @@ void actors::update()
     }
 }
 
+
+
+
 void actors::setGatheringRecource(bool flag)
 {
     this->isGatheringRecources = flag;
@@ -978,10 +967,85 @@ void actors::setCommonGoalTrue()
     this->commonGoal = true;
 }
 
+bool actors::findNearestSimilairResource()
+{
+    std::list <nearestBuildingTile> listOfResourceLocations;
+    int lowSearchLimitX = this->actorCords[0]-10;
+    if(lowSearchLimitX < 0)
+    {
+        lowSearchLimitX = 0;
+    }
+    int lowSearchLimitY = this->actorCords[1]-10;
+    if(lowSearchLimitY < 0)
+    {
+        lowSearchLimitY = 0;
+    }
+    int highSearchLimitX = this->actorCords[0]+10;
+    if(highSearchLimitX > MAP_WIDTH)
+    {
+        highSearchLimitX = MAP_WIDTH;
+    }
+    int highSearchLimitY = this->actorCords[0]+10;
+    if(highSearchLimitY > MAP_HEIGHT)
+    {
+        highSearchLimitY = MAP_HEIGHT;
+    }
+    for(int i = lowSearchLimitX; i < highSearchLimitX; i++)
+    {
+        for(int j = lowSearchLimitY; j < highSearchLimitY; j++)
+        {
+            if(currentGame.objectLocationList[i][j] != -1)
+            {
+                if(listOfObjects[currentGame.objectLocationList[i][j]].getTypeOfResource() == this->ResourceBeingGatherd)
+                {
+                    float tempDeltaDistance = dist(this->actorCords[0], this->actorCords[1], i, j);
+                    listOfResourceLocations.push_back({tempDeltaDistance, i, j, currentGame.objectLocationList[i][j], true});
+                }
+            }
+        }
+    }
+
+    if(!listOfResourceLocations.empty())
+    {
+        listOfResourceLocations.sort([](const nearestBuildingTile  &f, const nearestBuildingTile &s)
+        {
+            return f.deltaDistance < s.deltaDistance;
+        });
+    }
+    this->pathFound = false;
+    while(!this->pathFound && !listOfResourceLocations.empty())
+    {
+        this->actorGoal[0] = listOfResourceLocations.front().locationX;
+        this->actorGoal[1] =listOfResourceLocations.front().locationY;
+        this->noPathPossible = false;
+        std::thread pathfinding(&actors::pathAStar, &listOfActors[this->actorId]);
+        if(!canTargetBeReached())
+        {
+            this->noPathPossible = true;
+        }
+        pathfinding.join();
+        if(!this->pathFound)
+        {
+            listOfResourceLocations.pop_front();
+        }
+    }
+
+    if(!listOfResourceLocations.empty())
+    {
+        this->gatheringResourcesAt[0] = listOfResourceLocations.front().locationX;
+        this->gatheringResourcesAt[1] = listOfResourceLocations.front().locationY;
+        return true;
+    }
+    else
+    {
+        this->isGatheringRecources = false;
+        return false;
+    }
+}
+
 nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
 {
-    nearestBuildingTile nearestDropOffBuilding;
-    nearestDropOffBuilding = {0,0,0,0,false};
+    std::list <nearestBuildingTile> listOfDropOffLocations;
     for(int i = 0; i < listOfBuildings.size(); i++)
     {
         if((listOfBuildings[i].getRecievesWhichResources() == Resource || listOfBuildings[i].getRecievesWhichResources() == 4)
@@ -994,23 +1058,56 @@ nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
                     int tempX = listOfBuildings[i].getLocationX()-x;
                     int tempY = listOfBuildings[i].getLocationY()-y;
                     float tempDeltaDistance = dist(this->actorCords[0], this->actorCords[1], tempX, tempY);
-                    if(!nearestDropOffBuilding.isSet)
-                    {
-                        nearestDropOffBuilding = {tempDeltaDistance, tempX, tempY, listOfBuildings[i].getBuildingId(), true};
-                    }
-                    else if(tempDeltaDistance < nearestDropOffBuilding.deltaDistance)
-                    {
-                        nearestDropOffBuilding = {tempDeltaDistance, tempX, tempY, listOfBuildings[i].getBuildingId(), true};
-                    }
+                    listOfDropOffLocations.push_back({tempDeltaDistance, tempX, tempY, listOfBuildings[i].getBuildingId(), true});
                 }
             }
         }
     }
-    return nearestDropOffBuilding;
+    if(!listOfDropOffLocations.empty())
+    {
+        listOfDropOffLocations.sort([](const nearestBuildingTile  &f, const nearestBuildingTile &s)
+        {
+            return f.deltaDistance < s.deltaDistance;
+        });
+    }
+    this->pathFound = false;
+    while(!this->pathFound && !listOfDropOffLocations.empty())
+    {
+        this->actorGoal[0] = listOfDropOffLocations.front().locationX;
+        this->actorGoal[1] = listOfDropOffLocations.front().locationY;
+        this->noPathPossible = false;
+        std::thread pathfinding(&actors::pathAStar, &listOfActors[this->actorId]);
+        if(!canTargetBeReached())
+        {
+            this->noPathPossible = true;
+        }
+        pathfinding.join();
+        if(!this->pathFound)
+        {
+            listOfDropOffLocations.pop_front();
+        }
+    }
+
+    if(!listOfDropOffLocations.empty())
+    {
+        return listOfDropOffLocations.front();
+    }
+    else
+    {
+        return {0, 0, 0, 0, false};
+    }
+
+
 }
 
-int actors::getTeam(){
+int actors::getTeam()
+{
     return this->actorTeam;
+}
+
+bool actors::isInitialized()
+{
+    return this->initialized;
 }
 
 void actors::calculateRoute()

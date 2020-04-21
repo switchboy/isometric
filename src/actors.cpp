@@ -593,6 +593,7 @@ void actors::update()
                                 updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
                                 this->isWalkingToUnloadingPoint = true;
                                 this->reachedUnloadingPoint = false;
+                                this->retries = 4;
                             }
                             else
                             {
@@ -613,6 +614,7 @@ void actors::update()
                                 this->isAtRecource = false;
                                 this->hasToUnloadResource = false;
                                 this->timeStartedWalkingToRecource = 0.0f;
+                                this->retries = 0;
                             }
                         }
                         else
@@ -632,89 +634,11 @@ void actors::update()
             }
             else if(this->isGatheringRecources && (!this->busyWalking)&& this->route.empty())
             {
-                int northSouth;
-                int eastWest;
-                int diagonalX;
-                int diagonalY;
-                if(this->ResourceBeingGatherd == 0)
-                {
-                    northSouth = 22;
-                    eastWest = 55;
-                    diagonalX = 21;
-                    diagonalY = 12;
-                }
-                else
-                {
-                    northSouth = 11;
-                    eastWest = 27;
-                    diagonalX = 11;
-                    diagonalY = 6;
-                }
                 if(this->hasToUnloadResource)
                 {
                     if(!this->isBackAtOwnSquare)
                     {
-                        if(this->timeStartedWalkingToRecource == 0.0f)
-                        {
-                            this->timeStartedWalkingToRecource = currentGame.elapsedTime;
-                        }
-                        else if(currentGame.elapsedTime - this->timeStartedWalkingToRecource < 0.5f)
-                        {
-                            //0 N       0   degrees     = x-1  y-1
-                            //1 NE      45  degrees     = x    y-1
-                            //2 E       90  degrees     = x+1  y-1
-                            //3 SE      135 degrees     = x+1  y
-                            //4 S       180 degrees     = x+1  y+1
-                            //5 SW      225 degrees     = x    y+1
-                            //6 W       270 degrees     = x-1  y+1
-                            //7 NW      315 degrees     = x-1  y
-                            switch(this->orientation)
-                            {
-                            case 0:
-                                this->offSetX = 0;
-                                this->offSetY = -northSouth+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
-                                break;
-                            case 1:
-                                this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                                this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                                break;
-                            case 2:
-                                this->offSetX = eastWest-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
-                                this->offSetY = 0;
-                                break;
-                            case 3:
-                                this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                                this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                                break;
-                            case 4:
-                                this->offSetX = 0;
-                                this->offSetY = northSouth-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
-                                break;
-                            case 5:
-                                this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                                this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                                break;
-                            case 6:
-                                this->offSetX = -eastWest+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
-                                this->offSetY = 0;
-                                break;
-                            case 7:
-                                this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                                this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            this->isBackAtOwnSquare = true;
-                            this->isAtRecource = false;
-                            this->timeStartedWalkingToRecource = 0.0f;
-                            this->timeStartedGatheringRecource = currentGame.elapsedTime;
-                            this->offSetX = 0;
-                            this->offSetY = 0;
-                        }
-
-
+                        this->walkBackToOwnSquare();
                     }
                     else
                     {
@@ -725,6 +649,7 @@ void actors::update()
                             if(this->dropOffTile.isSet)
                             {
                                 updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
+                                this->retries = 4;
                                 this->isWalkingToUnloadingPoint = true;
                                 this->reachedUnloadingPoint = false;
                             }
@@ -735,64 +660,7 @@ void actors::update()
                         }
                         else if(this->reachedUnloadingPoint)
                         {
-                            switch(listOfBuildings[this->dropOffTile.buildingId].getRecievesWhichResources())
-                            {
-                            case 0:
-                                //recieves only wood
-                                listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
-                                this->amountOfWood = 0;
-                                break;
-                            case 1:
-                                //recieves only food
-                                listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
-                                this->amountOfFood = 0;
-                                break;
-                            case 2:
-                                //recieves only stone
-                                listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
-                                this->amountOfStone = 0;
-                                break;
-                            case 3:
-                                //recieves only gold
-                                listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
-                                this->amountOfGold = 0;
-                                break;
-                            case 4:
-                                //recieves all the resources!
-                                listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
-                                this->amountOfWood = 0;
-                                listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
-                                this->amountOfFood = 0;
-                                listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
-                                this->amountOfStone = 0;
-                                listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
-                                this->amountOfGold = 0;
-                                break;
-                            }
-                            if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
-                            {
-                                this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
-                                this->isWalkingToUnloadingPoint = false;
-                                this->isAtCarryCapacity = false;
-                                this->carriesRecources = false;
-                                this->isAtRecource = false;
-                                this->hasToUnloadResource = false;
-                                this->timeStartedWalkingToRecource = 0.0f;
-                            }
-                            else
-                            {
-                                //vind binnen 20 tegels de dichtbijzijnde van dezelfde resource
-                                if(this->findNearestSimilairResource())
-                                {
-                                    this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
-                                    this->isWalkingToUnloadingPoint = false;
-                                    this->isAtCarryCapacity = false;
-                                    this->carriesRecources = false;
-                                    this->isAtRecource = false;
-                                    this->hasToUnloadResource = false;
-                                    this->timeStartedWalkingToRecource = 0.0f;
-                                }
-                            }
+                            this->unloadAndReturnToGathering();
                         }
                     }
                 }
@@ -801,41 +669,7 @@ void actors::update()
                     //verzamel recources
                     if(this->isAtRecource)
                     {
-                        if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
-                        {
-                            if(currentGame.elapsedTime - this->timeStartedGatheringRecource > 2)
-                            {
-                                switch(this->ResourceBeingGatherd)
-                                {
-                                case 0:  //wood
-                                    this->amountOfWood += +1;
-                                    break;
-                                case 1: //food
-                                    this->amountOfFood += +1;
-                                    break;
-                                case 2: //stone
-                                    this->amountOfStone += +1;
-                                    break;
-                                case 3: // gold
-                                    this->amountOfGold += +1;
-                                    break;
-                                }
-                                listOfObjects[currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].substractResource();
-                                this->carriesRecources = true;
-                                if((this->amountOfFood == 10) || (this->amountOfWood == 10) ||(this->amountOfStone == 10) ||(this->amountOfGold == 10) )
-                                {
-                                    this->hasToUnloadResource = true;
-                                    this->isAtRecource = false;
-                                }
-                                this->timeStartedGatheringRecource = currentGame.elapsedTime;
-                            }
-                        }
-                        else
-                        {
-                            //resource not here!
-                            this->hasToUnloadResource = true;
-                            this->isAtRecource = false;
-                        }
+                        this->gatherResource();
                     }
                     else if(this->timeStartedWalkingToRecource == 0.0f)
                     {
@@ -843,95 +677,15 @@ void actors::update()
                     }
                     else if(currentGame.elapsedTime - this->timeStartedWalkingToRecource < 0.5f)
                     {
-                        //0 N       0   degrees     = x-1  y-1
-                        //1 NE      45  degrees     = x    y-1
-                        //2 E       90  degrees     = x+1  y-1
-                        //3 SE      135 degrees     = x+1  y
-                        //4 S       180 degrees     = x+1  y+1
-                        //5 SW      225 degrees     = x    y+1
-                        //6 W       270 degrees     = x-1  y+1
-                        //7 NW      315 degrees     = x-1  y
-                        switch(this->orientation)
-                        {
-                        case 0:
-                            this->offSetX = 0;
-                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth*-1;
-                            break;
-                        case 1:
-                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
-                            break;
-                        case 2:
-                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
-                            this->offSetY = 0;
-                            break;
-                        case 3:
-                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
-                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                            break;
-                        case 4:
-                            this->offSetX = 0;
-                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
-                            break;
-                        case 5:
-                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
-                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
-                            break;
-                        case 6:
-                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest*-1;
-                            this->offSetY = 0;
-                            break;
-                        case 7:
-                            this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
-                            this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
-                            break;
-                        }
+                        this->animateWalkingToResource();
                     }
                     else
                     {
-                        this->isAtRecource = true;
-                        this->timeStartedWalkingToRecource = 0.0f;
-                        this->timeStartedGatheringRecource = currentGame.elapsedTime;
-                        switch(this->orientation)
-                        {
-                        case 0:
-                            this->offSetX = 0;
-                            this->offSetY = -northSouth;
-                            break;
-                        case 1:
-                            this->offSetX = diagonalX;
-                            this->offSetY = -diagonalY;
-                            break;
-                        case 2:
-                            this->offSetX = eastWest;
-                            this->offSetY = 0;
-                            break;
-                        case 3:
-                            this->offSetX = diagonalX;
-                            this->offSetY = diagonalY;
-                            break;
-                        case 4:
-                            this->offSetX = 0;
-                            this->offSetY = northSouth;
-                            break;
-                        case 5:
-                            this->offSetX = -diagonalX;
-                            this->offSetY = diagonalY;
-                            break;
-                        case 6:
-                            this->offSetX = -eastWest;
-                            this->offSetY = 0;
-                            break;
-                        case 7:
-                            this->offSetX = -diagonalX;
-                            this->offSetY = -diagonalY;
-                            break;
-
-                        }
+                        this->startGatheringAnimation();
                     }
                 }
             }
-            if(commonGoal && !pathFound && retries < 6 && currentGame.elapsedTime-this->timeLastAttempt > 1)
+            if(this->commonGoal && !this->pathFound && this->retries < 6 && currentGame.elapsedTime-this->timeLastAttempt > 1)
             {
                 this->routeNeedsPath = true;
                 this->retries += +1;
@@ -939,17 +693,364 @@ void actors::update()
             }
             if(this->retries == 5)
             {
-                this->pathFound = false;
-                this->route.clear();
-                this->commonGoal = false;
-                this->retries = 0;
+                if(this->isGatheringRecources)
+                {
+                    if(this->findNearestSimilairResource())
+                    {
+                        this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
+                        this->isWalkingToUnloadingPoint = false;
+                        this->isAtCarryCapacity = false;
+                        this->carriesRecources = false;
+                        this->isAtRecource = false;
+                        this->hasToUnloadResource = false;
+                        this->timeStartedWalkingToRecource = 0.0f;
+                    } else {
+                        this->isGatheringRecources = false;
+                        this->pathFound = false;
+                        this->route.clear();
+                        this->commonGoal = false;
+                        this->retries = 0;
+                    }
+                }
+
+                else if(this->isWalkingToUnloadingPoint)
+                {
+                    //find new drop off point
+                    this->dropOffTile = findNearestDropOffPoint(this->ResourceBeingGatherd);
+                    if(this->dropOffTile.isSet)
+                    {
+                        updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
+                        this->isWalkingToUnloadingPoint = true;
+                        this->reachedUnloadingPoint = false;
+                    }
+                    else
+                    {
+                        this->isGatheringRecources = false;
+                        this->pathFound = false;
+                        this->route.clear();
+                        this->commonGoal = false;
+                        this->retries = 0;
+                    }
+                }
+
+                else
+                {
+                    this->pathFound = false;
+                    this->route.clear();
+                    this->commonGoal = false;
+                    this->retries = 0;
+                }
             }
         }
     }
 }
 
+void actors::walkBackToOwnSquare()
+{
+    int northSouth;
+    int eastWest;
+    int diagonalX;
+    int diagonalY;
+    if(this->ResourceBeingGatherd == 0)
+    {
+        northSouth = 22;
+        eastWest = 55;
+        diagonalX = 21;
+        diagonalY = 12;
+    }
+    else
+    {
+        northSouth = 11;
+        eastWest = 27;
+        diagonalX = 11;
+        diagonalY = 6;
+    }
+    if(this->timeStartedWalkingToRecource == 0.0f)
+    {
+        this->timeStartedWalkingToRecource = currentGame.elapsedTime;
+    }
+    else if(currentGame.elapsedTime - this->timeStartedWalkingToRecource < 0.5f)
+    {
+        //0 N       0   degrees     = x-1  y-1
+        //1 NE      45  degrees     = x    y-1
+        //2 E       90  degrees     = x+1  y-1
+        //3 SE      135 degrees     = x+1  y
+        //4 S       180 degrees     = x+1  y+1
+        //5 SW      225 degrees     = x    y+1
+        //6 W       270 degrees     = x-1  y+1
+        //7 NW      315 degrees     = x-1  y
+        switch(this->orientation)
+        {
+        case 0:
+            this->offSetX = 0;
+            this->offSetY = -northSouth+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
+            break;
+        case 1:
+            this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+            this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+            break;
+        case 2:
+            this->offSetX = eastWest-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
+            this->offSetY = 0;
+            break;
+        case 3:
+            this->offSetX = diagonalX-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+            this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+            break;
+        case 4:
+            this->offSetX = 0;
+            this->offSetY = northSouth-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
+            break;
+        case 5:
+            this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+            this->offSetY = diagonalY-((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+            break;
+        case 6:
+            this->offSetX = -eastWest+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
+            this->offSetY = 0;
+            break;
+        case 7:
+            this->offSetX = -diagonalX+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+            this->offSetY = -diagonalY+((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+            break;
+        }
+    }
+    else
+    {
+        this->isBackAtOwnSquare = true;
+        this->isAtRecource = false;
+        this->timeStartedWalkingToRecource = 0.0f;
+        this->timeStartedGatheringRecource = currentGame.elapsedTime;
+        this->offSetX = 0;
+        this->offSetY = 0;
+    }
+}
 
+void actors::startGatheringAnimation()
+{
+    int northSouth;
+    int eastWest;
+    int diagonalX;
+    int diagonalY;
+    if(this->ResourceBeingGatherd == 0)
+    {
+        northSouth = 22;
+        eastWest = 55;
+        diagonalX = 21;
+        diagonalY = 12;
+    }
+    else
+    {
+        northSouth = 11;
+        eastWest = 27;
+        diagonalX = 11;
+        diagonalY = 6;
+    }
+    this->isAtRecource = true;
+    this->timeStartedWalkingToRecource = 0.0f;
+    this->timeStartedGatheringRecource = currentGame.elapsedTime;
+    switch(this->orientation)
+    {
+    case 0:
+        this->offSetX = 0;
+        this->offSetY = -northSouth;
+        break;
+    case 1:
+        this->offSetX = diagonalX;
+        this->offSetY = -diagonalY;
+        break;
+    case 2:
+        this->offSetX = eastWest;
+        this->offSetY = 0;
+        break;
+    case 3:
+        this->offSetX = diagonalX;
+        this->offSetY = diagonalY;
+        break;
+    case 4:
+        this->offSetX = 0;
+        this->offSetY = northSouth;
+        break;
+    case 5:
+        this->offSetX = -diagonalX;
+        this->offSetY = diagonalY;
+        break;
+    case 6:
+        this->offSetX = -eastWest;
+        this->offSetY = 0;
+        break;
+    case 7:
+        this->offSetX = -diagonalX;
+        this->offSetY = -diagonalY;
+        break;
 
+    }
+}
+
+void actors::animateWalkingToResource()
+{
+    int northSouth;
+    int eastWest;
+    int diagonalX;
+    int diagonalY;
+    if(this->ResourceBeingGatherd == 0)
+    {
+        northSouth = 22;
+        eastWest = 55;
+        diagonalX = 21;
+        diagonalY = 12;
+    }
+    else
+    {
+        northSouth = 11;
+        eastWest = 27;
+        diagonalX = 11;
+        diagonalY = 6;
+    }
+    //0 N       0   degrees     = x-1  y-1
+    //1 NE      45  degrees     = x    y-1
+    //2 E       90  degrees     = x+1  y-1
+    //3 SE      135 degrees     = x+1  y
+    //4 S       180 degrees     = x+1  y+1
+    //5 SW      225 degrees     = x    y+1
+    //6 W       270 degrees     = x-1  y+1
+    //7 NW      315 degrees     = x-1  y
+    switch(this->orientation)
+    {
+    case 0:
+        this->offSetX = 0;
+        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth*-1;
+        break;
+    case 1:
+        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
+        break;
+    case 2:
+        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest;
+        this->offSetY = 0;
+        break;
+    case 3:
+        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX;
+        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+        break;
+    case 4:
+        this->offSetX = 0;
+        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*northSouth;
+        break;
+    case 5:
+        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
+        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY;
+        break;
+    case 6:
+        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*eastWest*-1;
+        this->offSetY = 0;
+        break;
+    case 7:
+        this->offSetX = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalX*-1;
+        this->offSetY = ((currentGame.elapsedTime - this->timeStartedWalkingToRecource) / 0.5f)*diagonalY*-1;
+        break;
+    }
+}
+
+void actors::gatherResource()
+{
+    if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
+    {
+        if(currentGame.elapsedTime - this->timeStartedGatheringRecource > 2)
+        {
+            switch(this->ResourceBeingGatherd)
+            {
+            case 0:  //wood
+                this->amountOfWood += +1;
+                break;
+            case 1: //food
+                this->amountOfFood += +1;
+                break;
+            case 2: //stone
+                this->amountOfStone += +1;
+                break;
+            case 3: // gold
+                this->amountOfGold += +1;
+                break;
+            }
+            listOfObjects[currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].substractResource();
+            this->carriesRecources = true;
+            if((this->amountOfFood == 10) || (this->amountOfWood == 10) ||(this->amountOfStone == 10) ||(this->amountOfGold == 10) )
+            {
+                this->hasToUnloadResource = true;
+                this->isAtRecource = false;
+            }
+            this->timeStartedGatheringRecource = currentGame.elapsedTime;
+        }
+    }
+    else
+    {
+        //resource not here!
+        this->hasToUnloadResource = true;
+        this->isAtRecource = false;
+    }
+}
+
+void actors::unloadAndReturnToGathering()
+{
+    switch(listOfBuildings[this->dropOffTile.buildingId].getRecievesWhichResources())
+    {
+    case 0:
+        //recieves only wood
+        listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
+        this->amountOfWood = 0;
+        break;
+    case 1:
+        //recieves only food
+        listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
+        this->amountOfFood = 0;
+        break;
+    case 2:
+        //recieves only stone
+        listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
+        this->amountOfStone = 0;
+        break;
+    case 3:
+        //recieves only gold
+        listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
+        this->amountOfGold = 0;
+        break;
+    case 4:
+        //recieves all the resources!
+        listOfPlayers[this->actorTeam].addResources(0, this->amountOfWood);
+        this->amountOfWood = 0;
+        listOfPlayers[this->actorTeam].addResources(1, this->amountOfFood);
+        this->amountOfFood = 0;
+        listOfPlayers[this->actorTeam].addResources(2, this->amountOfStone);
+        this->amountOfStone = 0;
+        listOfPlayers[this->actorTeam].addResources(3, this->amountOfGold);
+        this->amountOfGold = 0;
+        break;
+    }
+    if(currentGame.objectLocationList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
+    {
+        this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
+        this->isWalkingToUnloadingPoint = false;
+        this->isAtCarryCapacity = false;
+        this->carriesRecources = false;
+        this->isAtRecource = false;
+        this->hasToUnloadResource = false;
+        this->timeStartedWalkingToRecource = 0.0f;
+    }
+    else
+    {
+        if(this->findNearestSimilairResource())
+        {
+            this->updateGoal(this->gatheringResourcesAt[0], this->gatheringResourcesAt[1], 0);
+            this->isWalkingToUnloadingPoint = false;
+            this->isAtCarryCapacity = false;
+            this->carriesRecources = false;
+            this->isAtRecource = false;
+            this->hasToUnloadResource = false;
+            this->timeStartedWalkingToRecource = 0.0f;
+        }
+    }
+}
 
 void actors::setGatheringRecource(bool flag)
 {
@@ -970,22 +1071,22 @@ void actors::setCommonGoalTrue()
 bool actors::findNearestSimilairResource()
 {
     std::list <nearestBuildingTile> listOfResourceLocations;
-    int lowSearchLimitX = this->actorCords[0]-10;
+    int lowSearchLimitX = this->actorCords[0]-30;
     if(lowSearchLimitX < 0)
     {
         lowSearchLimitX = 0;
     }
-    int lowSearchLimitY = this->actorCords[1]-10;
+    int lowSearchLimitY = this->actorCords[1]-30;
     if(lowSearchLimitY < 0)
     {
         lowSearchLimitY = 0;
     }
-    int highSearchLimitX = this->actorCords[0]+10;
+    int highSearchLimitX = this->actorCords[0]+30;
     if(highSearchLimitX > MAP_WIDTH)
     {
         highSearchLimitX = MAP_WIDTH;
     }
-    int highSearchLimitY = this->actorCords[0]+10;
+    int highSearchLimitY = this->actorCords[0]+30;
     if(highSearchLimitY > MAP_HEIGHT)
     {
         highSearchLimitY = MAP_HEIGHT;

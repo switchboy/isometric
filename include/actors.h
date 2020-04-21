@@ -64,6 +64,11 @@ class actors
         bool isInitialized();
         int getTeam();
         bool findNearestSimilairResource();
+        void walkBackToOwnSquare();
+        void startGatheringAnimation();
+        void animateWalkingToResource();
+        void gatherResource();
+        void unloadAndReturnToGathering();
 
 
     private:

@@ -6,6 +6,8 @@
 #include <iostream>
 #include <sstream>
 #include <future>
+#include "gametext.h"
+
 
 void gameState::drawMousePosition(int x,int y, int noProblem)
 {
@@ -89,10 +91,13 @@ void gameState::drawGround(int i, int j)
     }
 }
 
-void gameState::drawThingsOnTile(int i, int j, bool redraw)
+void gameState::setIsPlacingBuilding()
 {
-    if(!redraw){drawGround(i, j);}
-    //check if there are building on the tile and draw them
+    this->isPlacingBuilding = true;
+}
+
+void gameState::drawThingsOnTile(int i, int j)
+{
     if(this->buildingLocationList[i][j] != -1)
     {
         listOfBuildings[this->buildingLocationList[i][j]].drawBuilding(i, j, 0, false);
@@ -105,15 +110,21 @@ void gameState::drawThingsOnTile(int i, int j, bool redraw)
     {
         listOfActors[this->occupiedByActorList[i][j]].drawActor();
     }
-    else if(this->movedToByActorList[i][j] != -1)
+}
+
+bool gameState::isInSelectedActors(int id)
+{
+    if(!this->selectedUnits.empty())
     {
-        listOfActors[this->movedToByActorList[i][j]].drawActor();
+        for(int i = 0; i < this->selectedUnits.size(); i++)
+        {
+            if(selectedUnits[i] == id)
+            {
+                return true;
+            }
+        }
     }
-    else if(this->movedFromByActorList[i][j] != -1)
-    {
-        listOfActors[this->movedFromByActorList[i][j]].drawActor();
-    }
-    //check if there are actors on the tile and draw them
+    return false;
 }
 
 mouseWorldCord toWorldMousePosition(int mouseX, int mouseY)
@@ -164,7 +175,18 @@ void gameState::drawMap()
         {
             if((i >= lowX.x && i <= highX.x)&&(j >= lowY.y && j <= highY.y))
             {
-                drawThingsOnTile(i, j, false);
+                drawGround(i, j);
+            }
+        }
+    }
+    for(int j = 0; j < MAP_HEIGHT; j++)
+    {
+        for(int i = 0; i < MAP_WIDTH; i++ )
+        {
+            if((i >= lowX.x && i <= highX.x)&&(j >= lowY.y && j <= highY.y))
+            {
+                drawThingsOnTile(i, j);
+
             }
         }
     }
@@ -172,13 +194,29 @@ void gameState::drawMap()
 
 void gameState::loadTextures()
 {
+    if(textureBigSelectedIcon.loadFromFile("textures/largeIconGrid.png"))
+    {
+        spriteBigSelectedIcon.setTexture(textureBigSelectedIcon);
+    }
+    else
+    {
+        std::cout << "Error loading texture: largeIconGrid.png \n" << std::endl;
+    }
     if(textureUIButton.loadFromFile("textures/icons.png"))
     {
         spriteUIButton.setTexture(textureUIButton);
     }
     else
     {
-        std::cout << "Error loading texture: gold.png \n" << std::endl;
+        std::cout << "Error loading texture: icons.png \n" << std::endl;
+    }
+    if(textureUnitSelectedTile.loadFromFile("textures/unitSelectedTile.png"))
+    {
+        spriteUnitSelectedTile.setTexture(textureUnitSelectedTile);
+    }
+    else
+    {
+        std::cout << "Error loading texture: unitSelectedTile.png \n" << std::endl;
     }
     if(textureStone.loadFromFile("textures/stone.png"))
     {
@@ -400,6 +438,11 @@ void gameState::loadTextures()
     {
         std::cout << "Error loading texture: cheatTile.png \n" << std::endl;
     }
+}
+
+void gameState::setBuildingType(int id)
+{
+    this->buildingTypeSelected = id;
 }
 
 void gameState::calculateRectangle()
@@ -664,9 +707,12 @@ void gameState::interact()
     {
         this->isPressedTab = true;
         int tempTeam = currentPlayer.getTeam()+1;
-        if(tempTeam > 7){
+        if(tempTeam > 7)
+        {
             currentPlayer = listOfPlayers[1];
-        } else {
+        }
+        else
+        {
             currentPlayer = listOfPlayers[tempTeam];
         }
 
@@ -692,16 +738,25 @@ void gameState::interact()
                 viewOffsetX = newOffsetX;
                 viewOffsetY = newOffsetY;
             }
+            else
+            {
+                //check if a button was pressed
+                for (auto &Button : listOfButtons)
+                {
+                    Button.isClicked(this->mouseFakePosition);
+                }
+            }
         }
         else
         {
             this->mousePressOutofWorld = false;
-            if(this->isPressedB)
+            if(this->isPressedB || this->isPlacingBuilding)
             {
                 if(!(this->mouseWorldPosition.x-footprintOfBuildings[this->buildingTypeSelected].amountOfXFootprint < -1) && !(this->mouseWorldPosition.y-footprintOfBuildings[this->buildingTypeSelected].amountOfYFootprint < -1) && !(this->mouseWorldPosition.x >= MAP_WIDTH) && !(this->mouseWorldPosition.y >= MAP_HEIGHT))
                 {
                     //check of het gebouw hier kan staan:
                     bool buildinPlacable = true;
+
                     for(int i = 0; i < footprintOfBuildings[this->buildingTypeSelected].amountOfXFootprint; i++)
                     {
                         for(int j = 0; j < footprintOfBuildings[this->buildingTypeSelected].amountOfYFootprint; j++)
@@ -717,6 +772,16 @@ void gameState::interact()
                         //Zet het gebouw neer
                         buildings newBuilding(this->buildingTypeSelected, this->mouseWorldPosition.x, this->mouseWorldPosition.y, listOfBuildings.size(), currentPlayer.getTeam());
                         listOfBuildings.push_back(newBuilding);
+                        if(this->isPlacingBuilding)
+                        {
+                            currentPlayer.substractResources(0,priceOfBuilding[this->buildingTypeSelected].wood);
+                            currentPlayer.substractResources(1,priceOfBuilding[this->buildingTypeSelected].food);
+                            currentPlayer.substractResources(2,priceOfBuilding[this->buildingTypeSelected].stone);
+                            currentPlayer.substractResources(3,priceOfBuilding[this->buildingTypeSelected].gold);
+                        }
+                        this->isPlacingBuilding = false;
+                        this->mousePressOutofWorld = true;
+
                     }
                     else
                     {
@@ -728,6 +793,7 @@ void gameState::interact()
             {
                 if(!(this->mouseWorldPosition.x < 0) && !(this->mouseWorldPosition.y < 0) && !(this->mouseWorldPosition.x >= MAP_WIDTH) && !(this->mouseWorldPosition.y >= MAP_HEIGHT))
                 {
+
                     //check of het object hier kan staan:
                     if(this->objectLocationList[mouseWorldPosition.x][mouseWorldPosition.y] == -1 && this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y] == -1)
                     {
@@ -739,6 +805,7 @@ void gameState::interact()
                     {
                         std::cout << "Can't place objectt the space is occupied!\n";
                     }
+
                 }
 
             }
@@ -746,17 +813,19 @@ void gameState::interact()
             {
                 if(!(this->mouseWorldPosition.x < 0) && !(this->mouseWorldPosition.y < 0) && !(this->mouseWorldPosition.x >= MAP_WIDTH) && !(this->mouseWorldPosition.y >= MAP_HEIGHT))
                 {
+
                     //check of de actor hier kan staan:
                     if(this->objectLocationList[mouseWorldPosition.x][mouseWorldPosition.y] == -1 && this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y] == -1 && this->occupiedByActorList[mouseWorldPosition.x][mouseWorldPosition.y] == -1)
                     {
                         //Zet de actor neer
-                        actors newActor(1, this->mouseWorldPosition.x, this->mouseWorldPosition.y, currentPlayer.getTeam(),  listOfActors.size());
+                        actors newActor(0, this->mouseWorldPosition.x, this->mouseWorldPosition.y, currentPlayer.getTeam(),  listOfActors.size());
                         listOfActors.push_back(newActor);
                     }
                     else
                     {
                         std::cout << "Can't place actor the space is occupied!\n";
                     }
+
                 }
 
             }
@@ -774,18 +843,21 @@ void gameState::interact()
     }
     else if(!sf::Mouse::isButtonPressed(sf::Mouse::Left))
     {
-        this->selectedUnits.clear();
-        this->mousePressedLeft = false;
-        if(!this->rectangleCords.empty())
+        if(this->mousePressedLeft && !(mouseFakePosition.y > mainWindowHeigth*0.8f))
         {
-            for(int i = 0; i < this->rectangleCords.size(); i++)
+            this->selectedUnits.clear();
+            if(!this->rectangleCords.empty())
             {
-                if(this->occupiedByActorList[this->rectangleCords[i].x][this->rectangleCords[i].y] != -1)
+                for(int i = 0; i < this->rectangleCords.size(); i++)
                 {
-                    selectedUnits.push_back({this->occupiedByActorList[this->rectangleCords[i].x][this->rectangleCords[i].y]});
+                    if(this->occupiedByActorList[this->rectangleCords[i].x][this->rectangleCords[i].y] != -1)
+                    {
+                        selectedUnits.push_back({this->occupiedByActorList[this->rectangleCords[i].x][this->rectangleCords[i].y]});
+                    }
                 }
             }
         }
+        this->mousePressedLeft = false;
     }
     //Mouse interaction Right
     if (sf::Mouse::isButtonPressed(sf::Mouse::Right) && !this->mousePressedRight && this->focus)
@@ -807,7 +879,7 @@ void gameState::interact()
                 this->objectTypeSelected = 0;
             }
         }
-        else if(!selectedUnits.empty())
+        else if(!this->selectedUnits.empty())
         {
             this->firstRound = true;
             this->lastIandJ[0] = 0;
@@ -818,15 +890,24 @@ void gameState::interact()
                 {
                     if(this->selectedUnits.size() > 1)
                     {
-                        mouseWorldCord tempCords = currentGame.getNextCord(this->mouseWorldPosition.x, this->mouseWorldPosition.y);
-                        listOfActors[this->selectedUnits[i]].updateGoal(tempCords.x, tempCords.y, i/5);
-                        listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
+                        if(listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                        {
+                            mouseWorldCord tempCords = currentGame.getNextCord(this->mouseWorldPosition.x, this->mouseWorldPosition.y);
+                            listOfActors[this->selectedUnits[i]].updateGoal(tempCords.x, tempCords.y, i/5);
+                            listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
+                        }
                     }
                     else
                     {
-                        listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, 0);
+                        if(listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                        {
+                            listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, 0);
+                        }
                     }
-                    listOfActors[this->selectedUnits[i]].setGatheringRecource(false);
+                    if(listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                    {
+                        listOfActors[this->selectedUnits[i]].setGatheringRecource(false);
+                    }
                 }
             }
             else if(this->objectLocationList[this->mouseWorldPosition.x][this->mouseWorldPosition.y] != -1)
@@ -835,12 +916,23 @@ void gameState::interact()
                 {
                     if(this->selectedUnits.size() > 1)
                     {
-                        listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, i/5);
-                        listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
-                    } else {
-                        listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, 0);
+                        if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                        {
+                            listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, i/5);
+                            listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
+                        }
                     }
-                    listOfActors[this->selectedUnits[i]].setGatheringRecource(true);
+                    else
+                    {
+                        if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                        {
+                            listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, 0);
+                        }
+                    }
+                    if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                    {
+                        listOfActors[this->selectedUnits[i]].setGatheringRecource(true);
+                    }
                 }
             }
         }
@@ -852,7 +944,7 @@ void gameState::interact()
     }
 
 
-    if(this->mousePressedLeft && !this->isPressedB && !this->isPressedO && !this->mousePressOutofWorld)
+    if(this->mousePressedLeft && !this->isPressedB && !this->isPressedO  && ! this->isPressedA && !this->mousePressOutofWorld)
     {
         calculateRectangle();
     }
@@ -878,16 +970,25 @@ void gameState::interact()
     }
 }
 
+void gameState::selectUnit(int id)
+{
+    this->selectedUnits.clear();
+    this->selectedUnits.push_back(id);
+}
+
 void gameState::drawMouseInteraction()
 {
-    if(!rectangleCords.empty())
+    if(this->mousePressedLeft && !this->mousePressOutofWorld)
     {
-        for(int i = 0; i < rectangleCords.size(); i++)
+        if(!rectangleCords.empty())
         {
-            drawMousePosition(rectangleCords[i].x, rectangleCords[i].y,true);
+            for(int i = 0; i < rectangleCords.size(); i++)
+            {
+                drawMousePosition(rectangleCords[i].x, rectangleCords[i].y,true);
+            }
         }
     }
-    if(isPressedB)
+    if(isPressedB || this->isPlacingBuilding)
     {
         listOfBuildings[0].drawBuildingFootprint(this->buildingTypeSelected, mouseWorldPosition.x, mouseWorldPosition.y);
     }
@@ -963,8 +1064,9 @@ mouseWorldCord gameState::getNextCord(int x, int y)
     }
 }
 
-drawMiniMapBackground(sf::RectangleShape& miniMapPixel){
-     if(!minimapTextureExist)
+drawMiniMapBackground(sf::RectangleShape& miniMapPixel)
+{
+    if(!minimapTextureExist)
     {
         minimapTexture.clear(sf::Color(0,0,0,0));
         for(int j = 0; j < MAP_HEIGHT; j++)
@@ -1048,19 +1150,23 @@ sf::RenderTexture minimapObjectsTexture;
 
 bool noNewBuildings;
 
-drawMiniMapBuildings(sf::RectangleShape& miniMapPixel){
-if(!noNewBuildings){
-    minimapBuildingsTexture.clear(sf::Color(0,0,0,0));
-    for(int j = 0; j < MAP_HEIGHT; j++)
+drawMiniMapBuildings(sf::RectangleShape& miniMapPixel)
+{
+    if(!noNewBuildings)
+    {
+        minimapBuildingsTexture.clear(sf::Color(0,0,0,0));
+        for(int j = 0; j < MAP_HEIGHT; j++)
         {
             for(int i = 0; i < MAP_WIDTH; i++ )
             {
-                if(currentGame.occupiedByBuildingList[i][j] != -1){
-                    switch(listOfBuildings[currentGame.occupiedByBuildingList[i][j]].getTeam()){
+                if(currentGame.occupiedByBuildingList[i][j] != -1)
+                {
+                    switch(listOfBuildings[currentGame.occupiedByBuildingList[i][j]].getTeam())
+                    {
                     case 0:
                         miniMapPixel.setFillColor(sf::Color(0, 0, 255));
                         miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                         minimapBuildingsTexture.draw(miniMapPixel);
+                        minimapBuildingsTexture.draw(miniMapPixel);
                         break;
                     case 1:
                         miniMapPixel.setFillColor(sf::Color(0, 255, 0));
@@ -1070,17 +1176,17 @@ if(!noNewBuildings){
                     case 2:
                         miniMapPixel.setFillColor(sf::Color(255, 0, 0));
                         miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                         minimapBuildingsTexture.draw(miniMapPixel);
+                        minimapBuildingsTexture.draw(miniMapPixel);
                         break;
                     case 3:
                         miniMapPixel.setFillColor(sf::Color(255, 255, 0 ));
                         miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                         minimapBuildingsTexture.draw(miniMapPixel);
+                        minimapBuildingsTexture.draw(miniMapPixel);
                         break;
                     case 4:
                         miniMapPixel.setFillColor(sf::Color(0, 255, 255));
                         miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                         minimapBuildingsTexture.draw(miniMapPixel);
+                        minimapBuildingsTexture.draw(miniMapPixel);
                         break;
                     case 5:
                         miniMapPixel.setFillColor(sf::Color(255, 0, 255));
@@ -1101,102 +1207,108 @@ if(!noNewBuildings){
                 }
             }
         }
-     minimapBuildingsTexture.display();
-     noNewBuildings = true;
+        minimapBuildingsTexture.display();
+        noNewBuildings = true;
     }
 }
 
 
 
-drawMiniMapActors(sf::RectangleShape& miniMapPixel){
+drawMiniMapActors(sf::RectangleShape& miniMapPixel)
+{
     minimapActorsTexture.clear(sf::Color(0,0,0,0));
     for(int j = 0; j < MAP_HEIGHT; j++)
+    {
+        for(int i = 0; i < MAP_WIDTH; i++ )
         {
-            for(int i = 0; i < MAP_WIDTH; i++ )
+            if(currentGame.occupiedByActorList[i][j] != -1)
             {
-                if(currentGame.occupiedByActorList[i][j] != -1){
-                    switch(listOfActors[currentGame.occupiedByActorList[i][j]].getTeam()){
-                    case 0:
-                        miniMapPixel.setFillColor(sf::Color(0, 0, 255));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    case 1:
-                        miniMapPixel.setFillColor(sf::Color(0, 255, 0));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    case 2:
-                        miniMapPixel.setFillColor(sf::Color(255, 0, 0));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    case 3:
-                        miniMapPixel.setFillColor(sf::Color(255, 255, 0 ));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    case 4:
-                        miniMapPixel.setFillColor(sf::Color(0, 255, 255));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    case 5:
-                        miniMapPixel.setFillColor(sf::Color(255, 0, 255));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    case 6:
-                        miniMapPixel.setFillColor(sf::Color(255, 127, 0));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    case 7:
-                        miniMapPixel.setFillColor(sf::Color(127, 127, 127));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapActorsTexture.draw(miniMapPixel);
-                        break;
-                    }
+                switch(listOfActors[currentGame.occupiedByActorList[i][j]].getTeam())
+                {
+                case 0:
+                    miniMapPixel.setFillColor(sf::Color(0, 0, 255));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
+                case 1:
+                    miniMapPixel.setFillColor(sf::Color(0, 255, 0));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
+                case 2:
+                    miniMapPixel.setFillColor(sf::Color(255, 0, 0));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
+                case 3:
+                    miniMapPixel.setFillColor(sf::Color(255, 255, 0 ));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
+                case 4:
+                    miniMapPixel.setFillColor(sf::Color(0, 255, 255));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
+                case 5:
+                    miniMapPixel.setFillColor(sf::Color(255, 0, 255));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
+                case 6:
+                    miniMapPixel.setFillColor(sf::Color(255, 127, 0));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
+                case 7:
+                    miniMapPixel.setFillColor(sf::Color(127, 127, 127));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapActorsTexture.draw(miniMapPixel);
+                    break;
                 }
             }
         }
-        minimapActorsTexture.display();
+    }
+    minimapActorsTexture.display();
 }
 
-drawMiniMapObjects(sf::RectangleShape& miniMapPixel){
+drawMiniMapObjects(sf::RectangleShape& miniMapPixel)
+{
 
     minimapObjectsTexture.clear(sf::Color(0,0,0,0));
     for(int j = 0; j < MAP_HEIGHT; j++)
+    {
+        for(int i = 0; i < MAP_WIDTH; i++ )
         {
-            for(int i = 0; i < MAP_WIDTH; i++ )
+            if(currentGame.objectLocationList[i][j] != -1)
             {
-                if(currentGame.objectLocationList[i][j] != -1){
-                    switch(listOfObjects[currentGame.objectLocationList[i][j]].getTypeOfResource()){
-                    case 0:
-                        miniMapPixel.setFillColor(sf::Color(33, 77, 33));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapObjectsTexture.draw(miniMapPixel);
-                        break;
-                    case 1:
-                        miniMapPixel.setFillColor(sf::Color(150, 88, 88));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapObjectsTexture.draw(miniMapPixel);
-                        break;
-                    case 2:
-                        miniMapPixel.setFillColor(sf::Color(65, 65, 65));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapObjectsTexture.draw(miniMapPixel);
-                        break;
-                    case 3:
-                        miniMapPixel.setFillColor(sf::Color(110, 90, 0 ));
-                        miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
-                        minimapObjectsTexture.draw(miniMapPixel);
-                        break;
-                    }
+                switch(listOfObjects[currentGame.objectLocationList[i][j]].getTypeOfResource())
+                {
+                case 0:
+                    miniMapPixel.setFillColor(sf::Color(33, 77, 33));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapObjectsTexture.draw(miniMapPixel);
+                    break;
+                case 1:
+                    miniMapPixel.setFillColor(sf::Color(150, 88, 88));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapObjectsTexture.draw(miniMapPixel);
+                    break;
+                case 2:
+                    miniMapPixel.setFillColor(sf::Color(65, 65, 65));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapObjectsTexture.draw(miniMapPixel);
+                    break;
+                case 3:
+                    miniMapPixel.setFillColor(sf::Color(110, 90, 0 ));
+                    miniMapPixel.setPosition(miniMapSpace(i,j,true), miniMapSpace(i,j,false));
+                    minimapObjectsTexture.draw(miniMapPixel);
+                    break;
                 }
             }
         }
-        minimapObjectsTexture.display();
+    }
+    minimapObjectsTexture.display();
 }
 
 void gameState::drawMiniMap()
@@ -1239,12 +1351,123 @@ void gameState::drawMiniMap()
 
 void gameState::drawToolbar()
 {
+    listOfButtons.clear();
     window.setView(toolBar);
+    int startX = mainWindowWidth/60;
+    int startY = mainWindowHeigth/30;
+    int tempY = startY;
+    int incrementalXOffset = 64+(mainWindowWidth/160);
+    int incrementalYOffset = 64+(mainWindowHeigth/90);
+    int spriteYOffset;
+    int cardDeckSize = mainWindowWidth/2.62;
+    int amountOfCardsPerRow = (this->selectedUnits.size()+1)/2;
+    int requiredSize = amountOfCardsPerRow*64;
+    int devider = (this->selectedUnits.size()+1)/2;
+    if(devider == 0)
+    {
+        devider =1;
+    }
+    int spaceBetweenCards = (cardDeckSize - requiredSize)/devider;
+    int offSetTonextCard = 64 + spaceBetweenCards;
+    int startDeck = mainWindowWidth/2.48;
+
+    if(!this->selectedUnits.empty())
+    {
+        bool villagerButtonsAreThere = false;
+        for(int i =0; i < this->selectedUnits.size(); i++)
+        {
+            if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam() && !villagerButtonsAreThere)
+            {
+                //Er is een eigen villager geselecteerd
+                //Maak de bijbehoorende knoppen
+                button newButton = {startX, startY, 0, 0, 0, listOfButtons.size()};
+                listOfButtons.push_back(newButton);
+                startX += incrementalXOffset;
+                button newButton1 = {startX, startY, 1, 1, 0, listOfButtons.size()};
+                listOfButtons.push_back(newButton1);
+                villagerButtonsAreThere = true;
+            }
+            if(i == 0)
+            {
+                std::string actorTitle;
+                switch(listOfActors[this->selectedUnits[i]].getType())
+                {
+                case 0:
+                    spriteYOffset = 0;
+                    actorTitle = "Villager";
+                }
+                this->spriteBigSelectedIcon.setTextureRect(sf::IntRect(128,spriteYOffset,128,128));
+                this->spriteBigSelectedIcon.setPosition(mainWindowWidth/4.08, mainWindowHeigth/30);
+                window.draw(this->spriteBigSelectedIcon);
+                text.setString(actorTitle);
+                text.setCharacterSize(26);
+                text.setOutlineColor(sf::Color::Black);
+                text.setOutlineThickness(2.f);
+                text.setFillColor(sf::Color::White);
+                int textStartX = (mainWindowWidth/4.08) + (128+(mainWindowWidth/160));
+                int textStartY = mainWindowHeigth/30;
+                text.setPosition(textStartX, textStartY);
+                window.draw(text);
+                text.setCharacterSize(18);
+                std::stringstream healthText;
+                healthText << "Hitpoints: " << listOfActors[this->selectedUnits[i]].getHealth().first <<"/" <<listOfActors[this->selectedUnits[i]].getHealth().second;
+                text.setString(healthText.str());
+                textStartY += 50;
+                text.setPosition(textStartX, textStartY);
+                window.draw(text);
+                textStartY += 20;
+                std::stringstream attakPoints;
+                attakPoints << "Melee damage: " << listOfActors[this->selectedUnits[i]].getMeleeDMG();
+                text.setString(attakPoints.str());
+                text.setPosition(textStartX, textStartY);
+                window.draw(text);
+                std::stringstream rangedDamage;
+                rangedDamage << "Ranged damage: " << listOfActors[this->selectedUnits[i]].getRangedDMG();
+                textStartY += 20;
+                text.setString(rangedDamage.str());
+                text.setPosition(textStartX, textStartY);
+                window.draw(text);
+                std::stringstream teamId;
+                teamId << "Team: " << listOfActors[this->selectedUnits[i]].getTeam();
+                textStartY += 20;
+                text.setString(teamId.str());
+                text.setPosition(textStartX, textStartY);
+                window.draw(text);
+            }
+            if(this->selectedUnits.size() > 1)
+            {
+                int buttonType;
+                //Speelruimte is 730 pixels = 1920/2.63 = cardDecksize
+                switch(listOfActors[this->selectedUnits[i]].getType())
+                {
+                case 0:
+                    buttonType = 2;
+                }
+                button newButton = {startDeck, tempY, buttonType, 2, this->selectedUnits[i], listOfButtons.size()};
+                listOfButtons.push_back(newButton);
+                if(tempY == startY)
+                {
+                    tempY += incrementalYOffset;
+                }
+                else
+                {
+                    startDeck += offSetTonextCard;
+                    tempY = startY;
+                }
+            }
+        }
+    }
+    //Draw the buttons
+    for (auto &Button : listOfButtons)
+    {
+        Button.drawButton();
+    }
 
     window.setView(worldView);
 }
 
-void gameState::drawTopBar(){
+void gameState::drawTopBar()
+{
     window.setView(topBar);
     playerStats tempStats = currentPlayer.getStats();
     std::stringstream resourcesText;
@@ -1255,6 +1478,7 @@ void gameState::drawTopBar(){
     text.setOutlineColor(sf::Color::Black);
     text.setOutlineThickness(1.f);
     text.setFillColor(sf::Color::White);
+    text.setPosition(10, 0);
     window.draw(text);
     window.setView(worldView);
 }
@@ -1271,14 +1495,19 @@ void gameState::drawGame()
     drawToolbar();
     drawMiniMap();
     drawMouseInteraction();
+    window.setView(totalView);
+    gameText.drawMessages();
+    window.setView(worldView);
     //debugging
-    for(int i = 0; i < listOfActors.size(); i++)
-    {
-        listOfActors[i].renderPath();
-    }
+//    for(int i = 0; i < listOfActors.size(); i++)
+//    {
+//        listOfActors[i].renderPath();
+//    }
     window.display();
 }
-
+float gameState::getTime(){
+ return this->elapsedTime;
+}
 void gameState::loadMap()
 {
     for(int i = 0; i < MAP_HEIGHT; i++)
@@ -1290,16 +1519,17 @@ void gameState::loadMap()
             this->occupiedByBuildingList[j][i] = -1;
             this->objectLocationList[j][i] = -1;
             this->occupiedByActorList[j][i] = -1;
-            this->movedToByActorList[j][i] = -1;
-            this->movedFromByActorList[j][i] = -1;
         }
     }
 }
 
 void gameState::loadBuildings()
 {
-    footprintOfBuildings.push_back({2,2});
-    footprintOfBuildings.push_back({4,4});
+    //food, wood, stone, gold
+    footprintOfBuildings.push_back({2,2});//house
+    priceOfBuilding.push_back({0,200,0,0});
+    footprintOfBuildings.push_back({4,4});//towncenter
+    priceOfBuilding.push_back({250,400,100,100});
 }
 
 void gameState::loadGame()
@@ -1318,10 +1548,14 @@ void gameState::loadGame()
     currentGame.loadTextures();
     currentGame.loadMap();
     currentGame.loadBuildings();
-    for(int i =0; i < 8; i++){
+    for(int i =0; i < 8; i++)
+    {
         listOfPlayers[i].setTeam(i);
     }
-    if(!this->font.loadFromFile("fonts/arial.ttf")){std::cout << "Could not load font arial.ttf!\n";}
+    if(!this->font.loadFromFile("fonts/arial.ttf"))
+    {
+        std::cout << "Could not load font arial.ttf!\n";
+    }
     this->focus = true;
     this->mousePressedLeft = false;
     this->equalIsPressed = false;
@@ -1335,6 +1569,7 @@ void gameState::loadGame()
     this->viewBoxX = mainWindowWidth/(this->mapPixelWidth/this->miniMapWidth);
     this->viewBoxY = (mainWindowHeigth*0.77f)/(this->mapPixelHeigth/this->miniMapHeigth);
     this->toolBarWidth = mainWindowWidth-miniMapWidth;
+    this->isPlacingBuilding = false;
 
 }
 

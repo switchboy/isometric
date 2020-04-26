@@ -17,71 +17,74 @@ player::~player()
 void player::addResources(int resource, int amount)
 {
 
-switch(resource){
-case 0:
-    //wood
-    this->amountOfWood += amount;
-    break;
-case 1:
-    //food
-    this->amountOfFood += amount;
-    break;
-case 2:
-    //stone
-    this->amountOfStone += amount;
-    break;
-case 3:
-    //gold
-    this->amountOfGold += amount;
-    break;
-}
+    switch(resource)
+    {
+    case 0:
+        //wood
+        this->amountOfWood += amount;
+        break;
+    case 1:
+        //food
+        this->amountOfFood += amount;
+        break;
+    case 2:
+        //stone
+        this->amountOfStone += amount;
+        break;
+    case 3:
+        //gold
+        this->amountOfGold += amount;
+        break;
+    }
 
 }
 
-void player::setTeam(int team){
+void player::setTeam(int team)
+{
     this->team = team;
 }
 
 void player::substractResources(int resource, int amount)
 {
-switch(resource){
-case 0:
-    //wood
-    this->amountOfWood -= amount;
-    break;
-case 1:
-    //food
-    this->amountOfFood -= amount;
-    break;
-case 2:
-    //stone
-    this->amountOfStone -= amount;
-    break;
-case 3:
-    //gold
-    this->amountOfGold -= amount;
-    break;
-}
+    switch(resource)
+    {
+    case 0:
+        //wood
+        this->amountOfWood -= amount;
+        break;
+    case 1:
+        //food
+        this->amountOfFood -= amount;
+        break;
+    case 2:
+        //stone
+        this->amountOfStone -= amount;
+        break;
+    case 3:
+        //gold
+        this->amountOfGold -= amount;
+        break;
+    }
 }
 
 void player::addToCurrentPopulation(int amount)
 {
- this->currentPopulation += amount;
+    this->currentPopulation += amount;
 }
 
 void player::substractFromCurrentPopulation(int amount)
 {
- this->currentPopulation -= amount;
+    this->currentPopulation -= amount;
 }
 
 void player::addToPopulationRoom(int amount)
 {
-this->populationRoom += amount;
+    this->populationRoom += amount;
 }
 
 void player::substractFromPopulationRoom(int amount)
 {
-this->populationRoom -= amount;
+    this->populationRoom -= amount;
 }
 
 void player::setTeamToNeutral(int team)
@@ -104,7 +107,8 @@ int player::getFriendOrFoo(int team)
 
 }
 
-int player::getTeam(){
+int player::getTeam()
+{
     return this->team;
 }
 

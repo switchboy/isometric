@@ -4,7 +4,9 @@
 
 
 std::vector<footprintOfBuilding> footprintOfBuildings;
+std::vector<buildingPrice> priceOfBuilding;
 std::vector<buildings> listOfBuildings;
+
 
 buildings::buildings(int type, int startXlocation, int startYLocation, int buildingId, int team)
 {
@@ -50,7 +52,8 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
     listOfPlayers[team].addToPopulationRoom(this->supportsPopulationOf);
 }
 
-int buildings::getTeam(){
+int buildings::getTeam()
+{
     return this->ownedByPlayer;
 }
 
@@ -134,7 +137,7 @@ void buildings::drawBuilding(int i, int j, int type, bool typeOverride)
         {
             for(int y = 1; y < footprintOfBuildings[this->buildingType].amountOfYFootprint; y++)
             {
-                currentGame.drawThingsOnTile(i+k, j-y, true);
+                currentGame.drawThingsOnTile(i+k, j-y);
             }
         }
     }
@@ -162,8 +165,10 @@ void buildings::drawBuildingFootprint(int type, int mouseWorldX, int mouseWorldY
     }
 }
 
-void buildings::update(){
-    switch(this->buildingType){
+void buildings::update()
+{
+    switch(this->buildingType)
+    {
     case 0:
         break;
     case 1:
@@ -172,5 +177,6 @@ void buildings::update(){
     }
 }
 
-void buildings::updateTownCenter(){
+void buildings::updateTownCenter()
+{
 }

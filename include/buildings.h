@@ -11,7 +11,8 @@ struct footprintOfBuilding
 
 extern std::vector<footprintOfBuilding> footprintOfBuildings;
 
-struct buildingQueue{
+struct buildingQueue
+{
     int unitOrResearchType;
     bool isResearch;
 };

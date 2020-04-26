@@ -2,6 +2,8 @@
 #define GAMESTATE_H
 #include <SFML/Graphics.hpp>
 #include "globalfunctions.h"
+#include "button.h"
+#include <list>
 
 extern int mainWindowWidth;
 extern int mainWindowHeigth;
@@ -19,6 +21,17 @@ extern sf::RenderTexture minimapActorsTexture;
 extern sf::RenderTexture minimapObjectsTexture;
 extern bool noNewBuildings;
 extern bool minimapTextureExist;
+extern std::list<button> listOfButtons;
+
+
+struct buildingPrice{
+    int food;
+    int wood;
+    int stone;
+    int gold;
+};
+
+extern std::vector<buildingPrice> priceOfBuilding;
 
 mouseWorldCord toWorldMousePosition(int mouseX, int mouseY);
 
@@ -28,7 +41,7 @@ class gameState
 public:
     void drawMousePosition(int x,int y, int noProblem);
     void drawGround(int i, int j);
-    void drawThingsOnTile(int i, int j, bool redraw);
+    void drawThingsOnTile(int i, int j);
     void drawMap();
     void loadTextures();
     void calculateRectangle();
@@ -45,27 +58,31 @@ public:
     float elapsedTime;
     bool isPassable(int x, int y);
     void drawViewBox();
+    bool isInSelectedActors(int id);
+    void setBuildingType(int id);
+    void setIsPlacingBuilding();
+    void selectUnit(int id);
+    float getTime();
     mouseWorldCord getNextCord(int x, int y);
     sf::Font font;
     sf::Text text;
     sf::Sprite  spriteSelectedTile,spriteSelectedTileForPath, spriteEmptyTile, spriteGrassTile, spriteSandTile, spriteSandTileNE,
-    spriteSandTileNW,spriteSandTileSE,spriteSandTileSW, spriteCactusTile, spriteCypressTrileTile,
+    spriteSandTileNW,spriteSandTileSE,spriteSandTileSW, spriteCactusTile, spriteCypressTrileTile, spriteBigSelectedIcon,
     spriteNormalTreeTile, spritePineTreeTile, spriteTileObstructed, spriteTownCenter,
-    spriteStone, spriteGold, spriteBerryBush, spriteUIButton,
+    spriteStone, spriteGold, spriteBerryBush, spriteUIButton, spriteUnitSelectedTile,
     spriteWaterTile, spriteBeachTileNE, spriteBeachTileNW,spriteBeachTileSE,spriteBeachTileSW, spriteBuildingHouse, spriteVillager, spriteTotalBackground;
 
     sf::Texture textureSelectedTile, textureSelectedTileForPath, textureEmptyTile, textureGrassTile, textureSandTile, textureSandTileNE,
-    textureSandTileNW,textureSandTileSE,textureSandTileSW, textureCactusTile, textureCypressTrileTile,
+    textureSandTileNW,textureSandTileSE,textureSandTileSW, textureCactusTile, textureCypressTrileTile, textureBigSelectedIcon,
     textureNormalTreeTile, texturePineTreeTile, textureCheatTile, textureTileObstructed, textureTownCenter,
-    textureStone, textureGold, textureBerryBush, textureUIButton,
+    textureStone, textureGold, textureBerryBush, textureUIButton, textureUnitSelectedTile,
     textureWaterTile, textureBeachTileNE, textureBeachTileNW,textureBeachTileSE, textureBeachTileSW, textureBuildingHouse, textureVillager, textureTotalBackground;
     int currentMap[MAP_WIDTH][MAP_HEIGHT];
     int buildingLocationList[MAP_WIDTH][MAP_HEIGHT];
     int objectLocationList[MAP_WIDTH][MAP_HEIGHT];
     int occupiedByBuildingList[MAP_WIDTH][MAP_HEIGHT];
     int occupiedByActorList[MAP_WIDTH][MAP_HEIGHT];
-    int movedToByActorList[MAP_WIDTH][MAP_HEIGHT];
-    int movedFromByActorList[MAP_WIDTH][MAP_HEIGHT];
+
 
 private:
     sf::Event event;
@@ -83,6 +100,7 @@ private:
     bool isPressedO;
     bool isPressedA;
     bool isPressedTab;
+    bool isPlacingBuilding;
     bool mousePressOutofWorld;
     int buildingTypeSelected;
     int objectTypeSelected;
@@ -96,10 +114,10 @@ private:
     float miniMapHeigth;
     int toolBarWidth;
     mouseWorldCord mouseWorldPosition;
-    std::vector<int> selectedUnits;
     std::vector<rectangleCord> rectangleCords;
     sf::Vector2i mouseFakePosition;
     sf::Vector2f mousePosition;
+    std::vector<int> selectedUnits;
 
 
 };

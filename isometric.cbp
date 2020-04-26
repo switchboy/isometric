@@ -47,7 +47,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add option="-std=c++11" />
+			<Add option="-std=c++1z" />
 			<Add option="-DSFML_STATIC" />
 			<Add directory="D:/Programming/SFML-2.5.1/include" />
 		</Compiler>
@@ -57,7 +57,9 @@
 		<Unit filename="include/actors.h" />
 		<Unit filename="include/animation.h" />
 		<Unit filename="include/buildings.h" />
+		<Unit filename="include/button.h" />
 		<Unit filename="include/gamestate.h" />
+		<Unit filename="include/gametext.h" />
 		<Unit filename="include/globalfunctions.h" />
 		<Unit filename="include/objects.h" />
 		<Unit filename="include/player.h" />
@@ -66,7 +68,9 @@
 		<Unit filename="src/actors.cpp" />
 		<Unit filename="src/animation.cpp" />
 		<Unit filename="src/buildings.cpp" />
+		<Unit filename="src/button.cpp" />
 		<Unit filename="src/gamestate.cpp" />
+		<Unit filename="src/gametext.cpp" />
 		<Unit filename="src/globalfunctions.cpp" />
 		<Unit filename="src/objects.cpp" />
 		<Unit filename="src/player.cpp" />

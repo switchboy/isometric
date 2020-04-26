@@ -419,7 +419,7 @@
 	<math.h>
 	<list>
 
-1587411937 source:d:\programming\isometric\main.cpp
+1587932871 source:d:\programming\isometric\main.cpp
 	<SFML/Graphics.hpp>
 	<iostream>
 	<vector>
@@ -431,6 +431,8 @@
 	"buildings.h"
 	"objects.h"
 	<future>
+	<mutex>
+	"gametext.h"
 
 1586895251 d:\programming\isometric\main.h
 	"globalfunctions.h"
@@ -444,11 +446,13 @@
 
 1584718378 d:\programming\isometric\include\animation.h
 
-1587411937 d:\programming\isometric\include\gamestate.h
+1587932204 d:\programming\isometric\include\gamestate.h
 	<SFML/Graphics.hpp>
 	"globalfunctions.h"
+	"button.h"
+	<list>
 
-1587411937 source:d:\programming\isometric\src\gamestate.cpp
+1587932614 source:d:\programming\isometric\src\gamestate.cpp
 	"gamestate.h"
 	"buildings.h"
 	"objects.h"
@@ -457,6 +461,7 @@
 	<iostream>
 	<sstream>
 	<future>
+	"gametext.h"
 
 1584568997 d:\programming\isometric\include\commonfunctions.h
 	<SFML/Graphics.hpp>
@@ -469,12 +474,12 @@
 	"gamestate.h"
 	"globals.h"
 
-1587223025 source:d:\programming\isometric\src\buildings.cpp
+1587928693 source:d:\programming\isometric\src\buildings.cpp
 	"buildings.h"
 	"gamestate.h"
 	"player.h"
 
-1586882544 d:\programming\isometric\include\buildings.h
+1587464155 d:\programming\isometric\include\buildings.h
 	<vector>
 	<list>
 
@@ -483,35 +488,56 @@
 1585852846 d:\programming\isometric\include\objects.h
 	<vector>
 
-1587415327 source:d:\programming\isometric\src\objects.cpp
+1587812514 source:d:\programming\isometric\src\objects.cpp
 	"objects.h"
 	"gamestate.h"
 
 1584720289 d:\programming\isometric\globals.h
 
-1587415905 source:d:\programming\isometric\src\actors.cpp
+1587900906 source:d:\programming\isometric\src\actors.cpp
 	"actors.h"
 	"objects.h"
 	"player.h"
 	"buildings.h"
 	<iostream>
 	<future>
+	"globalfunctions.h"
 
-1587462846 d:\programming\isometric\include\actors.h
+1587759006 d:\programming\isometric\include\actors.h
 	<cmath>
 	<list>
 	"gamestate.h"
 	<SFML/System.hpp>
 	<thread>
 
-1585150811 d:\programming\isometric\include\globalfunctions.h
+1587673978 d:\programming\isometric\include\globalfunctions.h
+	<mutex>
 
 1584721626 source:d:\programming\isometric\src\globalfunctions.cpp
 	"globalfunctions.h"
 	"gamestate.h"
 
-1585839720 source:d:\programming\isometric\src\player.cpp
+1587464156 source:d:\programming\isometric\src\player.cpp
 	"player.h"
 
-1585839720 d:\programming\isometric\include\player.h
+1587464156 d:\programming\isometric\include\player.h
+
+1587902237 d:\programming\isometric\include\button.h
+	<SFML/Graphics.hpp>
+
+1587932708 source:d:\programming\isometric\src\button.cpp
+	"button.h"
+	"gamestate.h"
+	<iostream>
+	<sstream>
+	"player.h"
+	"gametext.h"
+
+1587932669 source:d:\programming\isometric\src\gametext.cpp
+	"gametext.h"
+	"gamestate.h"
+
+1587932871 d:\programming\isometric\include\gametext.h
+	<string>
+	<list>
 

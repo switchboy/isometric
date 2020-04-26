@@ -37,7 +37,7 @@ objects::objects(int type, int startXlocation, int startYLocation, int objectId)
     switch(this->typeOfResource)
     {
     case 0:
-        this->resourceLeft = 10;
+        this->resourceLeft = 200;
         break;
     case 1:
         this->resourceLeft = 500;
@@ -55,6 +55,10 @@ objects::objects(int type, int startXlocation, int startYLocation, int objectId)
 void objects::substractResource()
 {
     this->resourceLeft -= 1;
+    if(resourceLeft < 0)
+    {
+        currentGame.objectLocationList[this->locationX][this->locationY] = -1;
+    }
 }
 
 void objects::drawObject(int i, int j)
@@ -103,13 +107,6 @@ void objects::drawObjectSprite(int spriteNumber, int i, int j)
     }
 }
 
-void objects::update()
-{
-    if(resourceLeft < 0)
-    {
-        currentGame.objectLocationList[this->locationX][this->locationY] = -1;
-    }
-}
 void objects::drawObjectFootprint(int type, int mouseWorldX, int mouseWorldY)
 {
     if(!(mouseWorldX < 0) && !(mouseWorldY < 0) && !(mouseWorldX >= MAP_WIDTH) && !(mouseWorldY >= MAP_HEIGHT))

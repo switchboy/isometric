@@ -2,6 +2,7 @@
 #define GLOBALFUNCTIONS_H
 #define MAP_WIDTH	200
 #define MAP_HEIGHT	200
+#include <mutex>
 
 extern int mapOffsetX;
 extern int mapOffsetY;
@@ -29,6 +30,7 @@ bool sortCordByX(const rectangleCord& lhs, rectangleCord& rhs);
 int worldSpace(int x, int y, bool getX);
 int miniMapSpace(int x, int y, bool getX);
 
+extern std::mutex mapArrayMutex;
 
 
 #endif // GLOBALFUNCTIONS_H

@@ -5,6 +5,10 @@
 #include <iostream>
 #include <future>
 
+#include "globalfunctions.h"
+
+std::mutex mapArrayMutex;
+
 void updateCells(int goalId, int startId, std::vector<Cells>& cellsList)
 {
     int n = 0;
@@ -340,15 +344,28 @@ bool actors::canTargetBeReached()
 
 std::vector<actors> listOfActors;
 
+int actors::getType()
+{
+    return this->actorType;
+}
+
 actors::actors(int type, int actorX, int actorY, int actorTeam, int actorId)
 {
+    currentGame.occupiedByActorList[actorX][actorY] = actorId;
+    listOfPlayers[actorTeam].addToCurrentPopulation(1);
     this->actorType = type;
-    this->actorCords[0] = actorX;
-    this->actorCords[1] = actorY;
-    this->actorGoal[0] = actorX;
-    this->actorGoal[1] = actorY;
     this->actorTeam = actorTeam;
     this->actorId = actorId;
+    this->actorCords[0] = actorX;
+    this->actorCords[1] = actorY;
+    switch(type)
+    {
+    case 0:
+        this->actorHealth = 300;
+        this->hitPoints = 300;
+    }
+    this->actorGoal[0] = actorX;
+    this->actorGoal[1] = actorY;
     this->orientation = 0;
     this->spriteYOffset = 0;
     this->retries = 0;
@@ -369,8 +386,7 @@ actors::actors(int type, int actorX, int actorY, int actorTeam, int actorId)
     this->isBackAtOwnSquare = false;
     this->offSetX = 0.0f;
     this->offSetY = 0.0f;
-    currentGame.occupiedByActorList[actorX][actorY] = actorId;
-    listOfPlayers[actorTeam].addToCurrentPopulation(1);
+    this->hasMoved= false;
     this->initialized = true;
 }
 
@@ -385,7 +401,6 @@ void actors::updateGoal(int i, int j, int waitTime)
     //check if values are in bounds
     if((i >= 0 && i < MAP_WIDTH) && (j >= 0 && j < MAP_HEIGHT))
     {
-        currentGame.movedFromByActorList[this->actorCords[0]][this->actorCords[1]] = -1;
         this->actorGoal[0] = i;
         this->actorGoal[1] = j;
         this->waitForAmountOfFrames = waitTime;
@@ -497,6 +512,7 @@ int newOrientation(int oldOrientation, int desiredOrientation)
     return output;
 }
 
+
 void actors::update()
 {
     if(this->initialized)
@@ -525,13 +541,13 @@ void actors::update()
                 this->movedMoreThanHalf = false;
                 this->actorCords[0] = this->actorGoal[0];
                 this->actorCords[1] = this->actorGoal[1];
-                currentGame.movedFromByActorList[this->actorCords[0]][this->actorCords[1]] = -1;
             }
             else if(this->busyWalking && (currentGame.elapsedTime-this->timeLastUpdate) > 0.5f && !this->movedMoreThanHalf)
             {
+
                 currentGame.occupiedByActorList[this->actorCords[0]][this->actorCords[1]] = -1;
-                currentGame.movedFromByActorList[this->actorCords[0]][this->actorCords[1]] = this->actorId;
                 this->movedMoreThanHalf = true;
+
             }
 
             if((!this->busyWalking) && this->pathFound &&(!this->route.empty()))
@@ -555,12 +571,15 @@ void actors::update()
                         //De actor staat met zijn neus de goede kant op en kan dus gaan lopen als de tegel vrij is!
                         if(currentGame.occupiedByActorList[this->route.back().positionX][this->route.back().positionY] == -1)
                         {
+                            this->hasMoved = true;
                             this->retries = 0;
                             this->busyWalking = true;
                             this->timeLastUpdate = currentGame.elapsedTime;
                             this->actorGoal[0] = this->route.back().positionX;
                             this->actorGoal[1] = this->route.back().positionY;
+
                             currentGame.occupiedByActorList[this->route.back().positionX][this->route.back().positionY] = this->actorId;
+
                             this->route.pop_back();
                             if(route.empty())
                             {
@@ -704,7 +723,9 @@ void actors::update()
                         this->isAtRecource = false;
                         this->hasToUnloadResource = false;
                         this->timeStartedWalkingToRecource = 0.0f;
-                    } else {
+                    }
+                    else
+                    {
                         this->isGatheringRecources = false;
                         this->pathFound = false;
                         this->route.clear();
@@ -741,6 +762,11 @@ void actors::update()
                     this->retries = 0;
                 }
             }
+        }
+        if(!this->busyWalking && this->route.empty() && this->hasMoved)
+        {
+            this->cleanUp();
+            this->hasMoved = false;
         }
     }
 }
@@ -1553,6 +1579,38 @@ void actors::pathAStarBiDi()
     this->route.pop_front();
 }
 
+void actors::cleanUp()
+{
+    for(int i =0; i < MAP_WIDTH; i++)
+    {
+        for(int j = 0; j < MAP_HEIGHT; j++)
+        {
+            if(currentGame.occupiedByActorList[i][j] == this->actorId)
+            {
+                if(i !=  this->actorCords[0] && j != this->actorCords[1])
+                {
+                    currentGame.occupiedByActorList[i][j] = -1;
+                }
+            }
+        }
+    }
+    currentGame.occupiedByActorList[this->actorCords[0]][this->actorCords[1]] = this->actorId;
+}
+
+std::pair<int, int> actors::getHealth()
+{
+    return {this->actorHealth, this->hitPoints};
+}
+
+int actors::getMeleeDMG()
+{
+    return this->meleeDamage;
+}
+
+int actors::getRangedDMG()
+{
+    return this->rangedDamage;
+}
 
 void actors:: drawActor()
 {
@@ -1564,6 +1622,7 @@ void actors:: drawActor()
     int yPosition = worldSpace(i,j,false);
     int spriteXoffset = 0;
     int spriteYoffset = 0;
+
     if(this->busyWalking || this->timeStartedWalkingToRecource > 0.0f)
     {
         if(currentGame.elapsedTime-this->timeLastOffsetChange > 0.2f)
@@ -1668,6 +1727,14 @@ void actors:: drawActor()
     }
     xPosition = xPosition + this->offSetX;
     yPosition = yPosition + this->offSetY;
+
+    if(currentGame.isInSelectedActors(this->actorId))
+    {
+        currentGame.spriteUnitSelectedTile.setPosition(xPosition, yPosition);
+        window.draw(currentGame.spriteUnitSelectedTile);
+    }
+
+
     currentGame.spriteVillager.setPosition(xPosition, yPosition);
     currentGame.spriteVillager.setTextureRect(sf::IntRect(spriteXoffset,spriteYoffset,16,32));
     window.draw(currentGame.spriteVillager);

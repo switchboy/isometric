@@ -256,6 +256,7 @@ void gameState::loadTextures()
     if(textureBuildingHouse.loadFromFile("textures/house.png"))
     {
         spriteBuildingHouse.setTexture(textureBuildingHouse);
+        spriteBuildingHouse.setTextureRect(sf::IntRect(0,0,128,128));
         spriteBuildingHouse.setOrigin(32,96);
     }
     else
@@ -296,6 +297,7 @@ void gameState::loadTextures()
     if(textureTownCenter.loadFromFile("textures/townCenter.png"))
     {
         spriteTownCenter.setTexture(textureTownCenter);
+        spriteTownCenter.setTextureRect(sf::IntRect(0,0,256,256));
         spriteTownCenter.setOrigin(96,224);
     }
     else
@@ -1394,7 +1396,7 @@ void gameState::drawToolbar()
                 {
                 case 0:
                     spriteYOffset = 0;
-                    actorTitle = "Villager";
+                    actorTitle = listOfActors[this->selectedUnits[i]].nameOfActor();
                 }
                 this->spriteBigSelectedIcon.setTextureRect(sf::IntRect(128,spriteYOffset,128,128));
                 this->spriteBigSelectedIcon.setPosition(mainWindowWidth/4.08, mainWindowHeigth/30);
@@ -1497,6 +1499,13 @@ void gameState::drawGame()
     drawMouseInteraction();
     window.setView(totalView);
     gameText.drawMessages();
+    if(mouseFakePosition.y > mainWindowHeigth*0.8){
+        for (auto &Button : listOfButtons)
+        {
+            Button.isHoverd(mouseFakePosition);
+        }
+    }
+
     window.setView(worldView);
     //debugging
 //    for(int i = 0; i < listOfActors.size(); i++)

@@ -34,6 +34,8 @@ public:
     int     getLocationY();
     int     getBuildingId();
     int     getTeam();
+    bool    getCompleted();
+    void    setCompleted();
 
 private:
     int     buildingId;
@@ -41,13 +43,16 @@ private:
     int     ownedByPlayer;
     int     hitPointsTotal;
     int     hitPointsLeft;
+    int     amountOfAnimationSprites;
+    int     spriteHeight;
+    int     spriteWidth;
+    int     offSetYStore;
     bool    buildingCompleted;
     bool    canDoRangedDamage;
     bool    recievesWood;
     bool    recievesStone;
     bool    recievesGold;
     bool    recievesFood;
-    int     buildingStage;
     int     buildingPointsNeeded;
     int     buildingPointsRecieved;
     int     startXlocation;

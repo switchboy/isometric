@@ -52,6 +52,7 @@ public:
     void calculateRoute();
     void takeDamage(int amountOfDamage);
     void drawActor();
+    std::string nameOfActor();
     void updateGoal(int i, int j, int waitTime);
     void renderPath();
     void setCommonGoalTrue();

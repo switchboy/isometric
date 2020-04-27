@@ -4,7 +4,7 @@
 #include "buildings.h"
 #include <iostream>
 #include <future>
-
+#include <string>
 #include "globalfunctions.h"
 
 std::mutex mapArrayMutex;
@@ -395,6 +395,13 @@ actors::~actors()
     //dtor
 }
 
+std::string actors::nameOfActor(){
+    switch(this->actorType){
+    case 0:
+        return  "Villager";
+        break;
+    }
+}
 
 void actors::updateGoal(int i, int j, int waitTime)
 {

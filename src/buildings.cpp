@@ -8,6 +8,15 @@ std::vector<buildingPrice> priceOfBuilding;
 std::vector<buildings> listOfBuildings;
 
 
+bool buildings::getCompleted(){
+    return this->buildingCompleted;
+}
+
+void buildings::setCompleted(){
+    this->buildingCompleted = true;
+}
+
+
 buildings::buildings(int type, int startXlocation, int startYLocation, int buildingId, int team)
 {
     this->buildingType = type;
@@ -15,6 +24,7 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
     this->startYLocation = startYLocation;
     this->buildingId = buildingId;
     this->ownedByPlayer = team;
+    this->buildingCompleted = false;
     currentGame.buildingLocationList[startXlocation][startYLocation] = buildingId;
     for(int i = 0; i < footprintOfBuildings[type].amountOfXFootprint; i++)
     {
@@ -36,6 +46,8 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesGold = false;
         recievesFood = false;
         supportsPopulationOf = 5;
+        this->offSetYStore = 0;
+        this->amountOfAnimationSprites = 0;
         break;
     case 1:
         hitPointsTotal = 5000;
@@ -47,6 +59,8 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesGold = true;
         recievesFood = true;
         supportsPopulationOf = 10;
+        this->offSetYStore = 0;
+        this->amountOfAnimationSprites = 0;
         break;
     }
     listOfPlayers[team].addToPopulationRoom(this->supportsPopulationOf);
@@ -108,23 +122,39 @@ int buildings::getRecievesWhichResources()
 void buildings::drawBuilding(int i, int j, int type, bool typeOverride)
 {
     int transparant;
+    int offsetY;
     if(!typeOverride)
     {
         type = this->buildingType;
+        if(this->buildingCompleted){
+            offsetY = 1;
+            if(this->amountOfAnimationSprites > 0){
+                offsetY += this->offSetYStore;
+                if(offsetY > amountOfAnimationSprites+1){
+                    offsetY = 1;
+                }
+                this->offSetYStore = offsetY;
+            }
+        } else {
+           offsetY = 0;
+        }
         transparant = 255;
     }
     else
     {
+        offsetY = 1;
         transparant = 128;
     }
     switch(type)
     {
     case 0:
+        currentGame.spriteBuildingHouse.setTextureRect(sf::IntRect(0, currentGame.spriteBuildingHouse.getTextureRect().height*offsetY, currentGame.spriteBuildingHouse.getTextureRect().width, currentGame.spriteBuildingHouse.getTextureRect().height));
         currentGame.spriteBuildingHouse.setPosition(worldSpace(i,j,true), worldSpace(i,j,false));
         currentGame.spriteBuildingHouse.setColor(sf::Color(255, 255, 255, transparant));
         window.draw(currentGame.spriteBuildingHouse);
         break;
     case 1:
+        currentGame.spriteTownCenter.setTextureRect(sf::IntRect(0, currentGame.spriteTownCenter.getTextureRect().height*offsetY, currentGame.spriteTownCenter.getTextureRect().width, currentGame.spriteTownCenter.getTextureRect().height));
         currentGame.spriteTownCenter.setPosition(worldSpace(i,j,true), worldSpace(i,j,false));
         currentGame.spriteTownCenter.setColor(sf::Color(255, 255, 255, transparant));
         window.draw(currentGame.spriteTownCenter);

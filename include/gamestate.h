@@ -4,6 +4,7 @@
 #include "globalfunctions.h"
 #include "button.h"
 #include <list>
+#include <sstream>
 
 extern int mainWindowWidth;
 extern int mainWindowHeigth;

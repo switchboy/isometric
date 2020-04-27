@@ -10,6 +10,8 @@ public:
     bool isClicked(sf::Vector2i mousePosition);
     void performAction();
     void drawButton();
+    bool isHoverd(sf::Vector2i mousePosition);
+    void showToolTip();
     virtual ~button();
 
 protected:

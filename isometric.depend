@@ -446,14 +446,14 @@
 
 1584718378 d:\programming\isometric\include\animation.h
 
-1587979277 d:\programming\isometric\include\gamestate.h
+1588090001 d:\programming\isometric\include\gamestate.h
 	<SFML/Graphics.hpp>
 	"globalfunctions.h"
 	"button.h"
 	<list>
 	<sstream>
 
-1588085166 source:d:\programming\isometric\src\gamestate.cpp
+1588104366 source:d:\programming\isometric\src\gamestate.cpp
 	"gamestate.h"
 	"buildings.h"
 	"objects.h"
@@ -475,15 +475,16 @@
 	"gamestate.h"
 	"globals.h"
 
-1588079549 source:d:\programming\isometric\src\buildings.cpp
+1588104211 source:d:\programming\isometric\src\buildings.cpp
 	"buildings.h"
 	"gamestate.h"
 	"player.h"
 	"gametext.h"
 
-1588067771 d:\programming\isometric\include\buildings.h
+1588104211 d:\programming\isometric\include\buildings.h
 	<vector>
 	<list>
+	<string>
 
 1584569054 d:\programming\isometric\include\globals.h
 
@@ -528,7 +529,7 @@
 1587977934 d:\programming\isometric\include\button.h
 	<SFML/Graphics.hpp>
 
-1588067443 source:d:\programming\isometric\src\button.cpp
+1588102844 source:d:\programming\isometric\src\button.cpp
 	"button.h"
 	"gamestate.h"
 	<iostream>

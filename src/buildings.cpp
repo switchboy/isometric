@@ -17,15 +17,7 @@ void buildings::setCompleted()
 {
     this->buildingCompleted = true;
     gameText.addNewMessage("- Building completed! -", 0);
-    switch(this->buildingType)
-    {
-    case 0:
-        this->supportsPopulationOf = 5;
-        break;
-    case 1:
-        this->supportsPopulationOf = 10;
-        break;
-    }
+    listOfPlayers[this->ownedByPlayer].addToPopulationRoom(this->supportsPopulationOf);
 }
 
 
@@ -59,7 +51,7 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesFood = false;
         buildingPointsNeeded = 10;
         buildingPointsRecieved = 0;
-        supportsPopulationOf = 0;
+        supportsPopulationOf = 5;
         this->offSetYStore = 0;
         this->amountOfAnimationSprites = 0;
         break;
@@ -74,12 +66,11 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesFood = true;
         buildingPointsNeeded = 30;
         buildingPointsRecieved = 0;
-        supportsPopulationOf = 0;
+        supportsPopulationOf = 10;
         this->offSetYStore = 0;
         this->amountOfAnimationSprites = 0;
         break;
     }
-    listOfPlayers[team].addToPopulationRoom(this->supportsPopulationOf);
 }
 
 int buildings::getTeam()
@@ -135,7 +126,8 @@ int buildings::getRecievesWhichResources()
     }
 }
 
-void buildings::addBuildingPoint(){
+void buildings::addBuildingPoint()
+{
     this->buildingPointsRecieved += 1;
 }
 
@@ -198,6 +190,32 @@ void buildings::drawBuilding(int i, int j, int type, bool typeOverride)
     }
 }
 
+std::string buildings::getName()
+{
+    switch(this->buildingType)
+    {
+    case 0:
+        return "House";
+    case 1:
+        return "Town Center";
+    }
+}
+
+std::pair<int, int> buildings::getHealth()
+{
+    return {this->hitPointsLeft, this->hitPointsTotal};
+}
+
+std::pair<int, int> buildings::getBuildingPoints()
+{
+    return {this->buildingPointsRecieved, this->buildingPointsNeeded};
+}
+
+
+int buildings::getRangedDMG(){
+    return this->amountOfRangedDamage;
+}
+
 void buildings::drawBuildingFootprint(int type, int mouseWorldX, int mouseWorldY)
 {
     if(!(mouseWorldX-footprintOfBuildings[0].amountOfXFootprint < -1) && !(mouseWorldY-footprintOfBuildings[0].amountOfYFootprint < -1) && !(mouseWorldX >= MAP_WIDTH) && !(mouseWorldY >= MAP_HEIGHT))
@@ -222,16 +240,19 @@ void buildings::drawBuildingFootprint(int type, int mouseWorldX, int mouseWorldY
 
 void buildings::update()
 {
-    if(this->buildingCompleted){
-    switch(this->buildingType)
+    if(this->buildingCompleted)
     {
-    case 0:
-        break;
-    case 1:
-        this->updateTownCenter();
-        break;
+        switch(this->buildingType)
+        {
+        case 0:
+            break;
+        case 1:
+            this->updateTownCenter();
+            break;
+        }
     }
-    } else if(this->buildingPointsNeeded <= this->buildingPointsRecieved) {
+    else if(this->buildingPointsNeeded <= this->buildingPointsRecieved)
+    {
         this->setCompleted();
     }
 }

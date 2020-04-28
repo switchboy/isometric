@@ -66,6 +66,11 @@ void button::showToolTip()
         toolTipText << listOfActors[this->actorOrBuildingId].nameOfActor();
         toolTipDiscription << "Selects this single unit from the current selection.";
         break;
+    case 3:
+        toolTipTitle << "Make villager";
+        toolTipText << "Cost: TBD";
+        toolTipDiscription << "The town center will start to well... generate a new villager. Villagers can collect resources and build buildings.";
+        break;
     }
 
     int longestStringLength = 0;
@@ -146,6 +151,10 @@ void button::performAction()
         //select that unit
         currentGame.selectUnit(this->actorOrBuildingId);
         break;
+    case 3:
+        //create villager
+        break;
+
     }
 }
 

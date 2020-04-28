@@ -862,6 +862,15 @@ void gameState::interact()
                     this->startMouseCords[0] = this->mousePosition.x;
                     this->startMouseCords[1] = this->mousePosition.y;
                 }
+                if(this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y] != -1)
+                {
+                    this->buildingSelectedId = this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y];
+                }
+                else
+                {
+                    this->buildingSelectedId = -1;
+                }
+
             }
         }
     }
@@ -1006,7 +1015,6 @@ void gameState::interact()
     {
         calculateRectangle();
     }
-
 
 
     if(!this->rectangleCords.empty() && sf::Keyboard::isKeyPressed(sf::Keyboard::Equal) &&!this->equalIsPressed && this->focus)
@@ -1515,6 +1523,76 @@ void gameState::drawToolbar()
             }
         }
     }
+    else if(this->buildingSelectedId != -1)
+    {
+        std::string buildingTitle = listOfBuildings[this->buildingSelectedId].getName();
+        //Get the buttons
+        switch(listOfBuildings[this->buildingSelectedId].getType())
+        {
+        case 0:
+            //house; no buttons
+            spriteYOffset = 128;
+            break;
+        case 1:
+            //town center
+            if(listOfBuildings[this->buildingSelectedId].getCompleted())
+            {
+                button makeVillager = {startX, startY, 2, 3, this->buildingSelectedId, listOfButtons.size()};
+                listOfButtons.push_back(makeVillager);
+                //research will also go here
+            }
+            spriteYOffset = 0;
+            break;
+        }
+
+        //icon and stats
+        this->spriteBigSelectedIcon.setTextureRect(sf::IntRect(0,spriteYOffset,128,128));
+        this->spriteBigSelectedIcon.setPosition(mainWindowWidth/4.08, mainWindowHeigth/30);
+        window.draw(this->spriteBigSelectedIcon);
+        text.setString(buildingTitle);
+        text.setCharacterSize(26);
+        text.setOutlineColor(sf::Color::Black);
+        text.setOutlineThickness(2.f);
+        text.setFillColor(sf::Color::White);
+        int textStartX = (mainWindowWidth/4.08) + (128+(mainWindowWidth/160));
+        int textStartY = mainWindowHeigth/30;
+        text.setPosition(textStartX, textStartY);
+        window.draw(text);
+        text.setCharacterSize(18);
+        std::stringstream healthText;
+        healthText << "Hitpoints: " << listOfBuildings[this->buildingSelectedId].getHealth().first <<"/" << listOfBuildings[this->buildingSelectedId].getHealth().second;
+        text.setString(healthText.str());
+        textStartY += 50;
+        text.setPosition(textStartX, textStartY);
+        window.draw(text);
+        textStartY += 20;
+        std::stringstream attakPoints;
+        attakPoints << "Current occupants: TBI";// << listOfActors[this->selectedUnits[i]].getMeleeDMG();
+        text.setString(attakPoints.str());
+        text.setPosition(textStartX, textStartY);
+        window.draw(text);
+        std::stringstream rangedDamage;
+        rangedDamage << "Ranged damage: " << listOfBuildings[this->buildingSelectedId].getRangedDMG();
+        textStartY += 20;
+        text.setString(rangedDamage.str());
+        text.setPosition(textStartX, textStartY);
+        window.draw(text);
+        std::stringstream teamId;
+        teamId << "Team: " << listOfBuildings[this->buildingSelectedId].getTeam();
+        textStartY += 20;
+        text.setString(teamId.str());
+        text.setPosition(textStartX, textStartY);
+        window.draw(text);
+
+        //Show what the building is doing ATM
+        if(!listOfBuildings[this->buildingSelectedId].getCompleted()){
+            //Show percentage bar completed
+
+        } else {
+            //check if building is doing anything TBI
+        }
+
+        }
     //Draw the buttons
     for (auto &Button : listOfButtons)
     {
@@ -1637,6 +1715,6 @@ void gameState::loadGame()
     this->viewBoxY = (mainWindowHeigth*0.77f)/(this->mapPixelHeigth/this->miniMapHeigth);
     this->toolBarWidth = mainWindowWidth-miniMapWidth;
     this->isPlacingBuilding = false;
-
+    this->buildingSelectedId = -1;
 }
 

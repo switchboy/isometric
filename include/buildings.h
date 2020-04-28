@@ -2,6 +2,7 @@
 #define BUILDINGS_H
 #include <vector>
 #include <list>
+#include <string>
 
 struct footprintOfBuilding
 {
@@ -36,6 +37,10 @@ public:
     int     getTeam();
     bool    getCompleted();
     void    setCompleted();
+    int     getRangedDMG();
+    std::pair<int, int> getBuildingPoints();
+    std::string getName();
+    std::pair<int, int> getHealth();
     void    addBuildingPoint();
 
 private:

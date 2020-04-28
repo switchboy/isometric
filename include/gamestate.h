@@ -103,6 +103,7 @@ private:
     bool isPressedTab;
     bool isPlacingBuilding;
     bool mousePressOutofWorld;
+    int buildingSelectedId;
     int buildingTypeSelected;
     int objectTypeSelected;
     int startMouseCords[2];

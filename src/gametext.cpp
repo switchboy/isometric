@@ -33,7 +33,8 @@ void gametext::drawMessages()
     for (auto &textItem : this->listOfMessages)
     {
         currentGame.text.setString(textItem.message);
-        switch(textItem.color){
+        switch(textItem.color)
+        {
         case 0:
             //white
             currentGame.text.setFillColor(sf::Color::White);

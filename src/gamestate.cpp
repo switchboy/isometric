@@ -780,6 +780,28 @@ void gameState::interact()
                             currentPlayer.substractResources(1,priceOfBuilding[this->buildingTypeSelected].food);
                             currentPlayer.substractResources(2,priceOfBuilding[this->buildingTypeSelected].stone);
                             currentPlayer.substractResources(3,priceOfBuilding[this->buildingTypeSelected].gold);
+                            for(int i = 0; i < this->selectedUnits.size(); i++)
+                            {
+                                if(this->selectedUnits.size() > 1)
+                                {
+                                    if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                                    {
+                                        listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, i/5);
+                                        listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
+                                    }
+                                }
+                                else
+                                {
+                                    if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                                    {
+                                        listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, 0);
+                                    }
+                                }
+                                if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                                {
+                                    listOfActors[this->selectedUnits[i]].setIsBuildingTrue();
+                                }
+                            }
                         }
                         this->isPlacingBuilding = false;
                         this->mousePressOutofWorld = true;
@@ -881,6 +903,10 @@ void gameState::interact()
                 this->objectTypeSelected = 0;
             }
         }
+        else if(this->isPlacingBuilding)
+        {
+            this->isPlacingBuilding = false;
+        }
         else if(!this->selectedUnits.empty())
         {
             this->firstRound = true;
@@ -934,6 +960,36 @@ void gameState::interact()
                     if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
                     {
                         listOfActors[this->selectedUnits[i]].setGatheringRecource(true);
+                    }
+                }
+            }
+            else if(this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y] != -1)
+            {
+                if(!listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getCompleted())
+                {
+                    {
+                        for(int i = 0; i < this->selectedUnits.size(); i++)
+                        {
+                            if(this->selectedUnits.size() > 1)
+                            {
+                                if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                                {
+                                    listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, i/5);
+                                    listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
+                                }
+                            }
+                            else
+                            {
+                                if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                                {
+                                    listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, 0);
+                                }
+                            }
+                            if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                            {
+                                listOfActors[this->selectedUnits[i]].setIsBuildingTrue();
+                            }
+                        }
                     }
                 }
             }
@@ -1499,7 +1555,8 @@ void gameState::drawGame()
     drawMouseInteraction();
     window.setView(totalView);
     gameText.drawMessages();
-    if(mouseFakePosition.y > mainWindowHeigth*0.8){
+    if(mouseFakePosition.y > mainWindowHeigth*0.8)
+    {
         for (auto &Button : listOfButtons)
         {
             Button.isHoverd(mouseFakePosition);
@@ -1514,8 +1571,9 @@ void gameState::drawGame()
 //    }
     window.display();
 }
-float gameState::getTime(){
- return this->elapsedTime;
+float gameState::getTime()
+{
+    return this->elapsedTime;
 }
 void gameState::loadMap()
 {

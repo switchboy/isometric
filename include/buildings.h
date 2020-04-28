@@ -36,6 +36,7 @@ public:
     int     getTeam();
     bool    getCompleted();
     void    setCompleted();
+    void    addBuildingPoint();
 
 private:
     int     buildingId;

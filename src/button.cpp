@@ -33,7 +33,8 @@ bool button::isClicked(sf::Vector2i mousePosition)
 
 }
 
-bool button::isHoverd(sf::Vector2i mousePosition){
+bool button::isHoverd(sf::Vector2i mousePosition)
+{
     sf::IntRect rect(this->realPositionX, this->realPositionY, 64, 64);
     if (rect.contains(mousePosition))
     {
@@ -43,7 +44,8 @@ bool button::isHoverd(sf::Vector2i mousePosition){
     return false;
 }
 
-void button::showToolTip(){
+void button::showToolTip()
+{
     std::stringstream toolTipTitle;
     std::stringstream toolTipText;
     std::stringstream toolTipDiscription;
@@ -67,11 +69,16 @@ void button::showToolTip(){
     }
 
     int longestStringLength = 0;
-    if(toolTipDiscription.str().length() >= toolTipText.str().length() && toolTipDiscription.str().length() >= toolTipTitle.str().length()){
+    if(toolTipDiscription.str().length() >= toolTipText.str().length() && toolTipDiscription.str().length() >= toolTipTitle.str().length())
+    {
         longestStringLength = toolTipDiscription.str().length();
-    } else if(toolTipText.str().length() >= toolTipDiscription.str().length() && toolTipText.str().length() >= toolTipTitle.str().length()){
+    }
+    else if(toolTipText.str().length() >= toolTipDiscription.str().length() && toolTipText.str().length() >= toolTipTitle.str().length())
+    {
         longestStringLength = toolTipText.str().length();
-    } else {
+    }
+    else
+    {
         longestStringLength = toolTipTitle.str().length();
     }
     int charSize = 20;

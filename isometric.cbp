@@ -55,7 +55,6 @@
 			<Add directory="D:/Programming/SFML-2.5.1/lib" />
 		</Linker>
 		<Unit filename="include/actors.h" />
-		<Unit filename="include/animation.h" />
 		<Unit filename="include/buildings.h" />
 		<Unit filename="include/button.h" />
 		<Unit filename="include/gamestate.h" />
@@ -66,7 +65,6 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
 		<Unit filename="src/actors.cpp" />
-		<Unit filename="src/animation.cpp" />
 		<Unit filename="src/buildings.cpp" />
 		<Unit filename="src/button.cpp" />
 		<Unit filename="src/gamestate.cpp" />

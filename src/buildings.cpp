@@ -1,19 +1,31 @@
 #include "buildings.h"
 #include "gamestate.h"
 #include "player.h"
-
+#include "gametext.h"
 
 std::vector<footprintOfBuilding> footprintOfBuildings;
 std::vector<buildingPrice> priceOfBuilding;
 std::vector<buildings> listOfBuildings;
 
 
-bool buildings::getCompleted(){
+bool buildings::getCompleted()
+{
     return this->buildingCompleted;
 }
 
-void buildings::setCompleted(){
+void buildings::setCompleted()
+{
     this->buildingCompleted = true;
+    gameText.addNewMessage("- Building completed! -", 0);
+    switch(this->buildingType)
+    {
+    case 0:
+        this->supportsPopulationOf = 5;
+        break;
+    case 1:
+        this->supportsPopulationOf = 10;
+        break;
+    }
 }
 
 
@@ -45,7 +57,9 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesStone= false;
         recievesGold = false;
         recievesFood = false;
-        supportsPopulationOf = 5;
+        buildingPointsNeeded = 10;
+        buildingPointsRecieved = 0;
+        supportsPopulationOf = 0;
         this->offSetYStore = 0;
         this->amountOfAnimationSprites = 0;
         break;
@@ -58,7 +72,9 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesStone= true;
         recievesGold = true;
         recievesFood = true;
-        supportsPopulationOf = 10;
+        buildingPointsNeeded = 30;
+        buildingPointsRecieved = 0;
+        supportsPopulationOf = 0;
         this->offSetYStore = 0;
         this->amountOfAnimationSprites = 0;
         break;
@@ -119,6 +135,10 @@ int buildings::getRecievesWhichResources()
     }
 }
 
+void buildings::addBuildingPoint(){
+    this->buildingPointsRecieved += 1;
+}
+
 void buildings::drawBuilding(int i, int j, int type, bool typeOverride)
 {
     int transparant;
@@ -126,17 +146,22 @@ void buildings::drawBuilding(int i, int j, int type, bool typeOverride)
     if(!typeOverride)
     {
         type = this->buildingType;
-        if(this->buildingCompleted){
+        if(this->buildingCompleted)
+        {
             offsetY = 1;
-            if(this->amountOfAnimationSprites > 0){
+            if(this->amountOfAnimationSprites > 0)
+            {
                 offsetY += this->offSetYStore;
-                if(offsetY > amountOfAnimationSprites+1){
+                if(offsetY > amountOfAnimationSprites+1)
+                {
                     offsetY = 1;
                 }
                 this->offSetYStore = offsetY;
             }
-        } else {
-           offsetY = 0;
+        }
+        else
+        {
+            offsetY = 0;
         }
         transparant = 255;
     }
@@ -197,6 +222,7 @@ void buildings::drawBuildingFootprint(int type, int mouseWorldX, int mouseWorldY
 
 void buildings::update()
 {
+    if(this->buildingCompleted){
     switch(this->buildingType)
     {
     case 0:
@@ -204,6 +230,9 @@ void buildings::update()
     case 1:
         this->updateTownCenter();
         break;
+    }
+    } else if(this->buildingPointsNeeded <= this->buildingPointsRecieved) {
+        this->setCompleted();
     }
 }
 

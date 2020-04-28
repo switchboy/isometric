@@ -57,6 +57,7 @@ public:
     void renderPath();
     void setCommonGoalTrue();
     void setGatheringRecource(bool flag);
+    void setIsBuildingTrue();
     bool canTargetBeReached();
     void checkCollision(int newCellId);
     nearestBuildingTile findNearestDropOffPoint(int Resource);
@@ -71,6 +72,7 @@ public:
     void startGatheringAnimation();
     void animateWalkingToResource();
     void gatherResource();
+    void buildBuilding();
     void unloadAndReturnToGathering();
     void cleanUp();
     int getMeleeDMG();
@@ -127,6 +129,7 @@ private:
     bool noPathPossible;
     bool routeNeedsPath;
     bool initialized;
+    bool isBuilding;
     int mapArray[MAP_HEIGHT*MAP_WIDTH];
     nearestBuildingTile dropOffTile;
     std::list<routeCell> route;

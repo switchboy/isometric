@@ -4,7 +4,8 @@
 #include <list>
 
 
-struct gameMessage{
+struct gameMessage
+{
     std::string message;
     int color;
     float timeAdded;
@@ -12,15 +13,15 @@ struct gameMessage{
 
 class gametext
 {
-    public:
-        gametext();
-        void addNewMessage(std::string message, int color);
-        void drawMessages();
-        void throwOutOldMessages();
-        virtual ~gametext();
+public:
+    gametext();
+    void addNewMessage(std::string message, int color);
+    void drawMessages();
+    void throwOutOldMessages();
+    virtual ~gametext();
 
-    private:
-        std::list<gameMessage> listOfMessages;
+private:
+    std::list<gameMessage> listOfMessages;
 };
 
 extern gametext gameText;

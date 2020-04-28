@@ -378,6 +378,7 @@ actors::actors(int type, int actorX, int actorY, int actorTeam, int actorId)
     this->timeStartedWalkingToRecource = 0.0f;
     this->goalNeedsUpdate = false;
     this->routeNeedsPath = false;
+    this->isBuilding = false;
     this->busyWalking = false;
     this->pathFound = false;
     this->isAtRecource = false;
@@ -563,7 +564,7 @@ void actors::update()
                 int wantedOrientation = actorOrientation(this->actorCords[0], this->actorCords[1], this->route.back().positionX, this->route.back().positionY);
                 if(wantedOrientation == this->orientation)
                 {
-                    if(this->isGatheringRecources && this->route.size() == 1)
+                    if((this->isGatheringRecources || this->isBuilding) && this->route.size() == 1)
                     {
                         this->pathFound = false;
                         this->commonGoal = false;
@@ -711,6 +712,25 @@ void actors::update()
                     }
                 }
             }
+            else if(this->isBuilding && (!this->busyWalking)&& this->route.empty()){
+                    //villager is aangekomen bij te bouwen gebouw en kan na verplaatst te zijn gaan bouwen!
+                    if(this->isAtRecource)
+                    {
+                        this->buildBuilding();
+                    } else if(this->timeStartedWalkingToRecource == 0.0f)
+                    {
+                        this->timeStartedWalkingToRecource = currentGame.elapsedTime;
+                    }
+                    else if(currentGame.elapsedTime - this->timeStartedWalkingToRecource < 0.5f)
+                    {
+                        this->animateWalkingToResource();
+                    }
+                    else
+                    {
+                        this->startGatheringAnimation();
+                    }
+            }
+
             if(this->commonGoal && !this->pathFound && this->retries < 6 && currentGame.elapsedTime-this->timeLastAttempt > 1)
             {
                 this->routeNeedsPath = true;
@@ -1088,6 +1108,7 @@ void actors::unloadAndReturnToGathering()
 void actors::setGatheringRecource(bool flag)
 {
     this->isGatheringRecources = flag;
+    this->isBuilding = false;
     if(flag)
     {
         this->ResourceBeingGatherd = listOfObjects[currentGame.objectLocationList[this->actorGoal[0]][this->actorGoal[1]]].getTypeOfResource();
@@ -1748,6 +1769,37 @@ void actors:: drawActor()
 }
 
 
+void actors::buildBuilding(){
+    if(currentGame.occupiedByBuildingList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]] != -1)
+    {
+        if(!listOfBuildings[currentGame.occupiedByBuildingList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].getCompleted())
+        {
+            if(currentGame.elapsedTime - this->timeStartedGatheringRecource > 2)
+            {
+                listOfBuildings[currentGame.occupiedByBuildingList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].addBuildingPoint();
+                this->timeStartedGatheringRecource = currentGame.elapsedTime;
+            }
+        } else {
+            //Het gebouw is af!
+            this->isAtRecource = false;
+            this->isBuilding = false;
+        }
+    }
+    else
+    {
+        //Building not here!
+        this->isAtRecource = false;
+        this->isBuilding = false;
+    }
+}
+
+void actors::setIsBuildingTrue(){
+    this->isBuilding = true;
+    this->isGatheringRecources = false;
+    this->ResourceBeingGatherd = 1;
+    this->gatheringResourcesAt[0] = this->actorGoal[0];
+    this->gatheringResourcesAt[1] = this->actorGoal[1];
+}
 void actors::renderPath()
 {
     std::list<routeCell>::iterator it;

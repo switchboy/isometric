@@ -11,12 +11,18 @@ struct footprintOfBuilding
 };
 
 extern std::vector<footprintOfBuilding> footprintOfBuildings;
+extern bool noNewBuildings;
 
 struct buildingQueue
 {
-    int unitOrResearchType;
     bool isResearch;
+    int idOfUnitOrResearch;
+    int productionPointsGained;
+    int productionPointsNeeded;
+    float lastTimeUpdate;
 };
+
+
 
 class buildings
 {
@@ -38,6 +44,9 @@ public:
     bool    getCompleted();
     void    setCompleted();
     int     getRangedDMG();
+    bool    hasTask();
+    void    removeBuilding();void    getTask(bool isResearch, int idOfUnitOrResearch, int productionPointsNeeded);
+    std::vector<buildingQueue>  productionQueue;
     std::pair<int, int> getBuildingPoints();
     std::string getName();
     std::pair<int, int> getHealth();
@@ -59,6 +68,7 @@ private:
     bool    recievesStone;
     bool    recievesGold;
     bool    recievesFood;
+    bool    exists;
     int     buildingPointsNeeded;
     int     buildingPointsRecieved;
     int     startXlocation;
@@ -67,9 +77,8 @@ private:
     int     endYLocation;
     int     amountOfRangedDamage;
     int     supportsPopulationOf;
-    buildingQueue     producingUnit;
-    std::list<buildingQueue>  productionQueue;
 };
+
 extern std::vector<buildings> listOfBuildings;
 
 #endif // BUILDINGS_H

@@ -6,7 +6,7 @@
 class button
 {
 public:
-    button(int positionX, int positionY, int spriteId, int actionType, int actorOrBuildingId, int buttonId);
+    button(int positionX, int positionY, int spriteId, int actionType, int actorOrBuildingId, int buttonId, int taskId);
     bool isClicked(sf::Vector2i mousePosition);
     void performAction();
     void drawButton();
@@ -25,6 +25,7 @@ private:
     int actorOrBuildingId;
     int spriteId;
     int buttonId;
+    int taskId;
 };
 
 #endif // BUTTON_H

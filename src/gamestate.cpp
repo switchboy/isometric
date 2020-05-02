@@ -1446,10 +1446,10 @@ void gameState::drawToolbar()
             {
                 //Er is een eigen villager geselecteerd
                 //Maak de bijbehoorende knoppen
-                button newButton = {startX, startY, 0, 0, 0, listOfButtons.size()};
+                button newButton = {startX, startY, 0, 0, 0, listOfButtons.size(),0};
                 listOfButtons.push_back(newButton);
                 startX += incrementalXOffset;
-                button newButton1 = {startX, startY, 1, 1, 0, listOfButtons.size()};
+                button newButton1 = {startX, startY, 1, 1, 0, listOfButtons.size(),0};
                 listOfButtons.push_back(newButton1);
                 villagerButtonsAreThere = true;
             }
@@ -1509,7 +1509,7 @@ void gameState::drawToolbar()
                 case 0:
                     buttonType = 2;
                 }
-                button newButton = {startDeck, tempY, buttonType, 2, this->selectedUnits[i], listOfButtons.size()};
+                button newButton = {startDeck, tempY, buttonType, 2, this->selectedUnits[i], listOfButtons.size(),0};
                 listOfButtons.push_back(newButton);
                 if(tempY == startY)
                 {
@@ -1537,7 +1537,7 @@ void gameState::drawToolbar()
             //town center
             if(listOfBuildings[this->buildingSelectedId].getCompleted())
             {
-                button makeVillager = {startX, startY, 2, 3, this->buildingSelectedId, listOfButtons.size()};
+                button makeVillager = {startX, startY, 2, 3, this->buildingSelectedId, listOfButtons.size(),0};
                 listOfButtons.push_back(makeVillager);
                 //research will also go here
             }
@@ -1567,7 +1567,7 @@ void gameState::drawToolbar()
         window.draw(text);
         textStartY += 20;
         std::stringstream attakPoints;
-        attakPoints << "Current occupants: TBI";// << listOfActors[this->selectedUnits[i]].getMeleeDMG();
+        attakPoints << "Occupants: TBI";// << listOfActors[this->selectedUnits[i]].getMeleeDMG();
         text.setString(attakPoints.str());
         text.setPosition(textStartX, textStartY);
         window.draw(text);
@@ -1585,14 +1585,100 @@ void gameState::drawToolbar()
         window.draw(text);
 
         //Show what the building is doing ATM
-        if(!listOfBuildings[this->buildingSelectedId].getCompleted()){
-            //Show percentage bar completed
-
-        } else {
-            //check if building is doing anything TBI
+        if(!listOfBuildings[this->buildingSelectedId].getCompleted())
+        {
+            int iconStartX = startDeck+(mainWindowWidth/30);
+            int iconStartY = startY+(mainWindowHeigth/27);
+            int startBarX = iconStartX + (mainWindowWidth/25.6);
+            int startBarY = iconStartY+ (mainWindowHeigth/46.9);
+            int totalBarLength = mainWindowWidth/6.4f;
+            sf::RectangleShape totalBar(sf::Vector2f(totalBarLength, 18.f));
+            sf::RectangleShape completeBar(sf::Vector2f(((float)listOfBuildings[this->buildingSelectedId].getBuildingPoints().first/(float)listOfBuildings[this->buildingSelectedId].getBuildingPoints().second)*totalBarLength, 18.f));
+            totalBar.setFillColor(sf::Color(255, 0, 0));
+            totalBar.setOutlineThickness(1.f);
+            totalBar.setOutlineColor(sf::Color(0, 0, 0));
+            totalBar.setPosition(startBarX, startBarY);
+            completeBar.setFillColor(sf::Color(0, 255, 0));
+            completeBar.setOutlineThickness(1.f);
+            completeBar.setOutlineColor(sf::Color(0, 0, 0));
+            completeBar.setPosition(startBarX, startBarY);
+            window.draw(totalBar);
+            window.draw(completeBar);
+            int percentageCompleted = ((float)listOfBuildings[this->buildingSelectedId].getBuildingPoints().first/(float)listOfBuildings[this->buildingSelectedId].getBuildingPoints().second)*100;
+            text.setString("Building: "+listOfBuildings[this->buildingSelectedId].getName() + " " + std::to_string(percentageCompleted) + "%...");
+            text.setPosition(startBarX, iconStartY);
+            window.draw(text);
+            this->spriteUIButton.setTextureRect(sf::IntRect(0, (spriteYOffset/2), 64, 64));
+            this->spriteUIButton.setPosition(iconStartX, iconStartY);
+            window.draw(this->spriteUIButton);
+            button cancelBuilding = {startBarX+totalBarLength+(mainWindowWidth/174.54), iconStartY, 3, 4, this->buildingSelectedId, listOfButtons.size(),0};
+            listOfButtons.push_back(cancelBuilding);
+        }
+        else
+        {
+            if(listOfBuildings[this->buildingSelectedId].hasTask())
+            {
+                int iconStartX = startDeck+(mainWindowWidth/30);
+                int iconStartY = startY+(mainWindowHeigth/27);
+                int startBarX = iconStartX + (mainWindowWidth/25.6);
+                int startBarY = iconStartY+ (mainWindowHeigth/46.9);
+                int totalBarLength = mainWindowWidth/6.4f;
+                sf::RectangleShape totalBar(sf::Vector2f(totalBarLength, 18.f));
+                sf::RectangleShape completeBar(sf::Vector2f(((float)listOfBuildings[this->buildingSelectedId].productionQueue.front().productionPointsGained/(float)listOfBuildings[this->buildingSelectedId].productionQueue.front().productionPointsNeeded)*totalBarLength, 18.f));
+                totalBar.setFillColor(sf::Color(255, 0, 0));
+                totalBar.setOutlineThickness(1.f);
+                totalBar.setOutlineColor(sf::Color(0, 0, 0));
+                totalBar.setPosition(startBarX, startBarY);
+                completeBar.setFillColor(sf::Color(0, 255, 0));
+                completeBar.setOutlineThickness(1.f);
+                completeBar.setOutlineColor(sf::Color(0, 0, 0));
+                completeBar.setPosition(startBarX, startBarY);
+                window.draw(totalBar);
+                window.draw(completeBar);
+                int percentageCompleted = ((float)listOfBuildings[this->buildingSelectedId].productionQueue.front().productionPointsGained/(float)listOfBuildings[this->buildingSelectedId].productionQueue.front().productionPointsNeeded)*100;
+                int tempXOffset;
+                int tempYOffset;
+                std::string nameString;
+                if(listOfBuildings[this->buildingSelectedId].productionQueue.front().isResearch )
+                {
+                    switch(listOfBuildings[this->buildingSelectedId].productionQueue.front().idOfUnitOrResearch)
+                    {
+                    case 0:
+                        break;
+                    }
+                }
+                else
+                {
+                    switch(listOfBuildings[this->buildingSelectedId].productionQueue.front().idOfUnitOrResearch)
+                    {
+                    case 0:
+                        nameString = "Villager";
+                        tempXOffset = 64;
+                        tempYOffset =  0;
+                    }
+                }
+                text.setString("Producing: "+ nameString + " " + std::to_string(percentageCompleted) + "%...");
+                text.setPosition(startBarX, iconStartY);
+                window.draw(text);
+                this->spriteUIButton.setTextureRect(sf::IntRect(tempXOffset, tempYOffset, 64, 64));
+                this->spriteUIButton.setPosition(iconStartX, iconStartY);
+                window.draw(this->spriteUIButton);
+                button cancelTask = {startBarX+totalBarLength+(mainWindowWidth/174.54), iconStartY, 3, 5, this->buildingSelectedId, listOfButtons.size(), 0};
+                listOfButtons.push_back(cancelTask);
+                if(listOfBuildings[this->buildingSelectedId].productionQueue.size() > 1)
+                {
+                    tempXOffset = iconStartX + (mainWindowWidth/24.93);
+                    tempYOffset = iconStartY + (mainWindowHeigth/22.97);
+                    for(int i = 1; i < listOfBuildings[this->buildingSelectedId].productionQueue.size(); i++){
+                        button tempButton = {tempXOffset, tempYOffset, 2, 5, this->buildingSelectedId, listOfButtons.size(), i};
+                        listOfButtons.push_back(tempButton);
+                        tempXOffset += 64+(mainWindowWidth/160);
+                    }
+                }
+            }
         }
 
-        }
+    }
     //Draw the buttons
     for (auto &Button : listOfButtons)
     {
@@ -1671,10 +1757,17 @@ void gameState::loadMap()
 void gameState::loadBuildings()
 {
     //food, wood, stone, gold
-    footprintOfBuildings.push_back({2,2});//house
+    footprintOfBuildings.push_back({2,2});//house 0
     priceOfBuilding.push_back({0,200,0,0});
-    footprintOfBuildings.push_back({4,4});//towncenter
+    footprintOfBuildings.push_back({4,4});//towncenter 1
     priceOfBuilding.push_back({250,400,100,100});
+}
+
+
+void loadActors()
+{
+    //food, wood, stone, gold
+    priceOfActor.push_back({200,0,0,0}); //villager 0
 }
 
 void gameState::loadGame()
@@ -1692,6 +1785,7 @@ void gameState::loadGame()
     window.setFramerateLimit(60);
     currentGame.loadTextures();
     currentGame.loadMap();
+    loadActors();
     currentGame.loadBuildings();
     for(int i =0; i < 8; i++)
     {

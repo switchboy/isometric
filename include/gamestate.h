@@ -25,14 +25,16 @@ extern bool minimapTextureExist;
 extern std::list<button> listOfButtons;
 
 
-struct buildingPrice{
+struct actorOrBuildingPrice
+{
     int food;
     int wood;
     int stone;
     int gold;
 };
 
-extern std::vector<buildingPrice> priceOfBuilding;
+extern std::vector<actorOrBuildingPrice> priceOfBuilding;
+extern std::vector<actorOrBuildingPrice> priceOfActor;
 
 mouseWorldCord toWorldMousePosition(int mouseX, int mouseY);
 
@@ -64,6 +66,7 @@ public:
     void setIsPlacingBuilding();
     void selectUnit(int id);
     float getTime();
+    int buildingSelectedId;
     mouseWorldCord getNextCord(int x, int y);
     sf::Font font;
     sf::Text text;
@@ -103,7 +106,6 @@ private:
     bool isPressedTab;
     bool isPlacingBuilding;
     bool mousePressOutofWorld;
-    int buildingSelectedId;
     int buildingTypeSelected;
     int objectTypeSelected;
     int startMouseCords[2];

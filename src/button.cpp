@@ -5,10 +5,11 @@
 #include "player.h"
 #include "gametext.h"
 #include "actors.h"
+#include "buildings.h"
 
 std::list<button> listOfButtons;
 
-button::button(int positionX, int positionY, int spriteId, int actionType, int actorOrBuildingId, int buttonId)
+button::button(int positionX, int positionY, int spriteId, int actionType, int actorOrBuildingId, int buttonId, int taskId)
 {
     this->positionX = positionX;
     this->positionY = positionY;
@@ -18,6 +19,7 @@ button::button(int positionX, int positionY, int spriteId, int actionType, int a
     this->actionType = actionType;
     this->actorOrBuildingId = actorOrBuildingId;
     this->buttonId = buttonId;
+    this->taskId = taskId;
 }
 
 bool button::isClicked(sf::Vector2i mousePosition)
@@ -68,8 +70,18 @@ void button::showToolTip()
         break;
     case 3:
         toolTipTitle << "Make villager";
-        toolTipText << "Cost: TBD";
+        toolTipText << "Cost: Food: "<< priceOfActor[0].food <<" Wood: "<< priceOfActor[0].wood <<" Stone: "<< priceOfActor[0].stone <<" Gold: "<< priceOfActor[0].gold;
         toolTipDiscription << "The town center will start to well... generate a new villager. Villagers can collect resources and build buildings.";
+        break;
+    case 4:
+        toolTipTitle << "Cancel building";
+        toolTipText << "Cancels building the current building.";
+        toolTipDiscription << "Removes blueprint and returns half of the invested resources.";
+        break;
+    case 5:
+        toolTipTitle << "Cancel production";
+        toolTipText << "Cancels research or unit production";
+        toolTipDiscription << "Production ceases and half of the invested resources are returned.";
         break;
     }
 
@@ -153,8 +165,28 @@ void button::performAction()
         break;
     case 3:
         //create villager
+        if(priceOfActor[0].food <= currentPlayer.getStats().amountOfFood && priceOfActor[0].wood <= currentPlayer.getStats().amountOfWood && priceOfActor[0].stone <= currentPlayer.getStats().amountOfStone && priceOfActor[0].gold <= currentPlayer.getStats().amountOfGold)
+        {
+            listOfBuildings[this->actorOrBuildingId].getTask(false, 0, 120);
+        }
+        else
+        {
+            std::stringstream errortext;
+            errortext << "Not enough resources to produce a villager! Cost Food: "<< priceOfActor[0].food <<" Wood: "<< priceOfActor[0].wood <<" Stone: "<< priceOfActor[0].stone <<" Gold: "<< priceOfActor[0].gold;
+            gameText.addNewMessage(errortext.str(), 1);
+        }
         break;
-
+    case 4:
+        //cancel building
+        currentPlayer.addResources(1, priceOfBuilding[listOfBuildings[this->actorOrBuildingId].getType()].food/2 );
+        currentPlayer.addResources(0, priceOfBuilding[listOfBuildings[this->actorOrBuildingId].getType()].wood/2 );
+        currentPlayer.addResources(2, priceOfBuilding[listOfBuildings[this->actorOrBuildingId].getType()].stone/2 );
+        currentPlayer.addResources(3, priceOfBuilding[listOfBuildings[this->actorOrBuildingId].getType()].gold/2 );
+        listOfBuildings[this->actorOrBuildingId].removeBuilding();
+        break;
+    case 5:
+        //cancel production or research
+        break;
     }
 }
 
@@ -177,6 +209,9 @@ void button::drawButton()
         xOffSet = 64;
         yOffset = 0;
         break;
+    case 3:
+        xOffSet = 192;
+        yOffset = 0;
 
     }
     currentGame.spriteUIButton.setTextureRect(sf::IntRect(xOffSet, yOffset, 64, 64));

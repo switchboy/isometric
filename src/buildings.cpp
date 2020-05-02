@@ -2,9 +2,10 @@
 #include "gamestate.h"
 #include "player.h"
 #include "gametext.h"
+#include "actors.h"
 
 std::vector<footprintOfBuilding> footprintOfBuildings;
-std::vector<buildingPrice> priceOfBuilding;
+std::vector<actorOrBuildingPrice> priceOfBuilding;
 std::vector<buildings> listOfBuildings;
 
 
@@ -20,7 +21,23 @@ void buildings::setCompleted()
     listOfPlayers[this->ownedByPlayer].addToPopulationRoom(this->supportsPopulationOf);
 }
 
-
+void buildings::removeBuilding()
+{
+    this->exists = false;
+    currentGame.buildingLocationList[this->startXlocation][this->startYLocation] = -1;
+    for(int i = 0; i < footprintOfBuildings[this->buildingType].amountOfXFootprint; i++)
+    {
+        for(int j = 0; j < footprintOfBuildings[this->buildingType].amountOfYFootprint; j++)
+        {
+            currentGame.occupiedByBuildingList[startXlocation-i][startYLocation-j] = -1;
+        }
+    }
+    if(currentGame.buildingSelectedId == this->buildingId)
+    {
+        currentGame.buildingSelectedId = -1;
+    }
+    noNewBuildings = false;
+}
 buildings::buildings(int type, int startXlocation, int startYLocation, int buildingId, int team)
 {
     this->buildingType = type;
@@ -29,6 +46,7 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
     this->buildingId = buildingId;
     this->ownedByPlayer = team;
     this->buildingCompleted = false;
+    this->exists = true;
     currentGame.buildingLocationList[startXlocation][startYLocation] = buildingId;
     for(int i = 0; i < footprintOfBuildings[type].amountOfXFootprint; i++)
     {
@@ -212,7 +230,8 @@ std::pair<int, int> buildings::getBuildingPoints()
 }
 
 
-int buildings::getRangedDMG(){
+int buildings::getRangedDMG()
+{
     return this->amountOfRangedDamage;
 }
 
@@ -238,25 +257,69 @@ void buildings::drawBuildingFootprint(int type, int mouseWorldX, int mouseWorldY
     }
 }
 
-void buildings::update()
+void  buildings::getTask(bool isResearch, int idOfUnitOrResearch, int productionPointsNeeded)
 {
-    if(this->buildingCompleted)
+    if(this->productionQueue.size() < 5 )
     {
-        switch(this->buildingType)
-        {
-        case 0:
-            break;
-        case 1:
-            this->updateTownCenter();
-            break;
-        }
+        this->productionQueue.push_back({isResearch, idOfUnitOrResearch, 0, productionPointsNeeded, 0});
     }
-    else if(this->buildingPointsNeeded <= this->buildingPointsRecieved)
+    else
     {
-        this->setCompleted();
+        gameText.addNewMessage("No room in building queue for production...", 1);
     }
 }
 
-void buildings::updateTownCenter()
+bool buildings::hasTask()
 {
+    if(this->productionQueue.empty())
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
+
+void buildings::update()
+{
+    if(this->exists)
+    {
+        if(this->buildingCompleted)
+        {
+            if(!this->productionQueue.empty())
+            {
+                if(this->productionQueue.front().lastTimeUpdate + 1 < currentGame.elapsedTime)
+                {
+                    if(this->productionQueue.front().productionPointsGained >= this->productionQueue.front().productionPointsNeeded)
+                    {
+                        int xPosition = this->endXlocation+1;
+                        int yPosition = this->endYLocation+1;
+                        if(!this->productionQueue.front().isResearch)
+                        {
+                            switch(this->productionQueue.front().idOfUnitOrResearch)
+                            {
+                            case 0:
+                                actors newActor(0, xPosition, yPosition, this->ownedByPlayer,  listOfActors.size());
+                                listOfActors.push_back(newActor);
+                                break;
+                            }
+                        }
+
+                        this->productionQueue.erase(productionQueue.begin());
+                    }
+                    else
+                    {
+                        this->productionQueue.front().productionPointsGained += 1;
+                        this->productionQueue.front().lastTimeUpdate = currentGame.elapsedTime;
+                    }
+                }
+            }
+        }
+        else if(this->buildingPointsNeeded <= this->buildingPointsRecieved)
+        {
+            this->setCompleted();
+        }
+    }
+}
+

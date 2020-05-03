@@ -1669,7 +1669,8 @@ void gameState::drawToolbar()
                 {
                     tempXOffset = iconStartX + (mainWindowWidth/24.93);
                     tempYOffset = iconStartY + (mainWindowHeigth/22.97);
-                    for(int i = 1; i < listOfBuildings[this->buildingSelectedId].productionQueue.size(); i++){
+                    for(int i = 1; i < listOfBuildings[this->buildingSelectedId].productionQueue.size(); i++)
+                    {
                         button tempButton = {tempXOffset, tempYOffset, 2, 5, this->buildingSelectedId, listOfButtons.size(), i};
                         listOfButtons.push_back(tempButton);
                         tempXOffset += 64+(mainWindowWidth/160);

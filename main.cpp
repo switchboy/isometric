@@ -86,11 +86,11 @@ void calculateRoutesWorker()
 {
     while(window.isOpen())
     {
-        if(!listOfActors.empty())
+        if(!listOfActorsWhoNeedAPath.empty())
         {
-            for(int i = 0; i < listOfActors.size(); i++)
+            for (std::list<int>::const_iterator iterator = listOfActorsWhoNeedAPath.begin(), end = listOfActorsWhoNeedAPath.end(); iterator != end; ++iterator)
             {
-                std::async(std::launch::async, routeHelper, i);
+                std::async(std::launch::async, routeHelper,*iterator);
             }
         }
     }

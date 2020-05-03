@@ -9,6 +9,7 @@
 
 std::mutex mapArrayMutex;
 std::vector<actorOrBuildingPrice> priceOfActor;
+std::list<int> listOfActorsWhoNeedAPath;
 
 void updateCells(int goalId, int startId, std::vector<Cells>& cellsList)
 {
@@ -416,6 +417,7 @@ void actors::updateGoal(int i, int j, int waitTime)
         this->actorGoal[1] = j;
         this->waitForAmountOfFrames = waitTime;
         this->goalNeedsUpdate = true;
+        listOfActorsWhoNeedAPath.push_back(this->actorId);
         this->busyWalking = false;
         this->pathFound = false;
         this->isAtRecource = false;
@@ -537,6 +539,7 @@ void actors::update()
             if(this->waitForAmountOfFrames == 0)
             {
                 this->routeNeedsPath = true;
+                listOfActorsWhoNeedAPath.push_back(this->actorId);
                 this->goalNeedsUpdate = false;
             }
             else
@@ -610,6 +613,7 @@ void actors::update()
                                 this->actorGoal[0] = this->route.front().positionX;
                                 this->actorGoal[1] = this->route.front().positionY;
                                 this->routeNeedsPath = true;
+                                listOfActorsWhoNeedAPath.push_back(this->actorId);
                                 this->retries += +1;
                                 this->timeLastAttempt = currentGame.elapsedTime;
                             }
@@ -739,6 +743,7 @@ void actors::update()
             if(this->commonGoal && !this->pathFound && this->retries < 6 && currentGame.elapsedTime-this->timeLastAttempt > 1)
             {
                 this->routeNeedsPath = true;
+                listOfActorsWhoNeedAPath.push_back(this->actorId);
                 this->retries += +1;
                 this->timeLastAttempt = currentGame.elapsedTime;
             }
@@ -773,6 +778,7 @@ void actors::update()
                     if(this->dropOffTile.isSet)
                     {
                         updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
+                        listOfActorsWhoNeedAPath.push_back(this->actorId);
                         this->isWalkingToUnloadingPoint = true;
                         this->reachedUnloadingPoint = false;
                     }
@@ -1788,9 +1794,18 @@ void actors::buildBuilding()
         }
         else
         {
-            //Het gebouw is af!
-            this->isAtRecource = false;
-            this->isBuilding = false;
+            if(this->isBackAtOwnSquare)
+            {
+                //Het gebouw is af!
+                this->isAtRecource = false;
+                this->isBuilding = false;
+                this->isBackAtOwnSquare = false;
+            }
+            else
+            {
+                this->walkBackToOwnSquare();
+            }
+
         }
     }
     else

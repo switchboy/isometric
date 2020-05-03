@@ -45,7 +45,8 @@ public:
     void    setCompleted();
     int     getRangedDMG();
     bool    hasTask();
-    void    removeBuilding();void    getTask(bool isResearch, int idOfUnitOrResearch, int productionPointsNeeded);
+    void    removeBuilding();
+    void    getTask(bool isResearch, int idOfUnitOrResearch, int productionPointsNeeded);
     std::vector<buildingQueue>  productionQueue;
     std::pair<int, int> getBuildingPoints();
     std::string getName();
@@ -77,6 +78,7 @@ private:
     int     endYLocation;
     int     amountOfRangedDamage;
     int     supportsPopulationOf;
+    bool    hasDisplayedError;
 };
 
 extern std::vector<buildings> listOfBuildings;

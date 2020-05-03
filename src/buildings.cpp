@@ -281,6 +281,97 @@ bool buildings::hasTask()
     }
 }
 
+struct worldCords
+{
+    int x;
+    int y;
+};
+
+
+
+void addNeighboursOfImpassableNeighbours(int& i, std::vector<Cells>& cellsList, std::list<Cells*>& listToCheck)
+{
+    int tempId;
+    if(cellsList[i].positionX > 0)
+    {
+        tempId = i-MAP_HEIGHT;
+        addNeighbours(tempId, cellsList);
+    }
+    if(cellsList[i].positionX < MAP_WIDTH-1)
+    {
+        tempId = i+MAP_HEIGHT;
+        addNeighbours(tempId, cellsList);
+    }
+    if(cellsList[i].positionY > 0)
+    {
+        tempId = i-1;
+        addNeighbours(tempId, cellsList);
+    }
+    if(cellsList[i].positionY != MAP_HEIGHT-1)
+    {
+        tempId = i+1;
+        addNeighbours(tempId, cellsList);
+    }
+    if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX < MAP_WIDTH-1)
+    {
+        tempId = i+1+MAP_HEIGHT;
+        addNeighbours(tempId, cellsList);
+    }
+    if(cellsList[i].positionY >0 && cellsList[i].positionX < MAP_WIDTH-1)
+    {
+        tempId = i-1+MAP_HEIGHT;
+        addNeighbours(tempId, cellsList);
+    }
+    if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX > 0)
+    {
+        tempId = i+1-MAP_HEIGHT;
+        addNeighbours(tempId, cellsList);
+    }
+    if(cellsList[i].positionY >0 && cellsList[i].positionX > 0)
+    {
+        tempId = i-1-MAP_HEIGHT;
+        addNeighbours(tempId, cellsList);
+    }
+}
+
+
+
+worldCords findEmptySpot(worldCords startCords)
+{
+    if(currentGame.isPassable(startCords.x, startCords.y))
+    {
+        return startCords;
+    }
+    else
+    {
+        std::vector<Cells> cellsList;
+        cellsList.reserve(MAP_HEIGHT*MAP_WIDTH);
+        int startCell = (startCords.x*MAP_HEIGHT)+startCords.y;
+        std::list<Cells*> listToCheck;
+        addNeighbours(startCell, cellsList);
+        cellsList[startCell].visited = true;
+        listToCheck.push_back(&cellsList[startCell]);
+        bool freeCellFound = false;
+        while(!freeCellFound && !listToCheck.empty())
+        {
+            for(int q = 0; q < 8; q++)
+            {
+                if((*listToCheck.front()).neighbours[q] != -1)
+                {
+                    freeCellFound = true;
+                    int newCellId = (*listToCheck.front()).neighbours[q];
+                    return {cellsList[newCellId].positionX, cellsList[newCellId].positionY};
+                }
+            }
+            if(!freeCellFound)
+            {
+                addNeighboursOfImpassableNeighbours((*listToCheck.front()).cellId, cellsList, listToCheck);
+            }
+            listToCheck.pop_front();
+        }
+    }
+}
+
 void buildings::update()
 {
     if(this->exists)
@@ -293,25 +384,41 @@ void buildings::update()
                 {
                     if(this->productionQueue.front().productionPointsGained >= this->productionQueue.front().productionPointsNeeded)
                     {
-                        int xPosition = this->endXlocation+1;
-                        int yPosition = this->endYLocation+1;
+                        worldCords spawmCords = findEmptySpot({this->startXlocation+1, this->startYLocation+1});
                         if(!this->productionQueue.front().isResearch)
                         {
-                            switch(this->productionQueue.front().idOfUnitOrResearch)
+                            if(currentPlayer.getStats().currentPopulation < currentPlayer.getStats().populationRoom)
                             {
-                            case 0:
-                                actors newActor(0, xPosition, yPosition, this->ownedByPlayer,  listOfActors.size());
-                                listOfActors.push_back(newActor);
-                                break;
+                                switch(this->productionQueue.front().idOfUnitOrResearch)
+                                {
+                                case 0:
+                                    actors newActor(0, spawmCords.x, spawmCords.y, this->ownedByPlayer,  listOfActors.size());
+                                    listOfActors.push_back(newActor);
+                                    break;
+                                }
+                                this->productionQueue.erase(productionQueue.begin());
                             }
-                        }
+                            else
+                            {
+                                if(!this->hasDisplayedError)
+                                {
+                                    gameText.addNewMessage("Not enough population room to add more units, build more houses!", 1);
+                                    this->hasDisplayedError = true;
+                                }
+                            }
 
-                        this->productionQueue.erase(productionQueue.begin());
+                        }
+                        else
+                        {
+                            //research things do ehh TBI
+                            this->productionQueue.erase(productionQueue.begin());
+                        }
                     }
                     else
                     {
                         this->productionQueue.front().productionPointsGained += 1;
                         this->productionQueue.front().lastTimeUpdate = currentGame.elapsedTime;
+                        this->hasDisplayedError = false;
                     }
                 }
             }

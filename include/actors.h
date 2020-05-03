@@ -25,6 +25,8 @@ struct nearestBuildingTile
     bool isSet;
 };
 
+extern void addNeighbours(int& i, std::vector<Cells>& cellsList);
+
 struct islandCell
 {
     int positionX;
@@ -140,5 +142,6 @@ private:
 };
 
 extern std::vector<actors> listOfActors;
+extern std::list<int> listOfActorsWhoNeedAPath;
 
 #endif // ACTORS_H

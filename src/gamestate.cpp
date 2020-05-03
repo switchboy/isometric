@@ -870,7 +870,14 @@ void gameState::interact()
                 {
                     this->buildingSelectedId = -1;
                 }
-
+                if(this->objectLocationList[this->mouseWorldPosition.x][this->mouseWorldPosition.y] != -1)
+                {
+                    this->objectSelectedId = this->objectLocationList[this->mouseWorldPosition.x][this->mouseWorldPosition.y];
+                }
+                else
+                {
+                    this->objectSelectedId = -1;
+                }
             }
         }
     }
@@ -892,7 +899,7 @@ void gameState::interact()
         }
         this->mousePressedLeft = false;
     }
-    //Mouse interaction Right
+//Mouse interaction Right
     if (sf::Mouse::isButtonPressed(sf::Mouse::Right) && !this->mousePressedRight && this->focus)
     {
         this->rectangleCords.clear();
@@ -1680,6 +1687,57 @@ void gameState::drawToolbar()
         }
 
     }
+    else if(this->objectSelectedId != -1)
+    {
+
+        std::string objectName = listOfObjects[this->objectSelectedId].getName();
+        //Get the buttons
+        switch(listOfObjects[this->objectSelectedId].getType())
+        {
+        case 0:
+            spriteYOffset = 0;
+            break;
+        case 1:
+            spriteYOffset = 128;
+            break;
+        case 2:
+            spriteYOffset = 256;
+            break;
+        case 3:
+            spriteYOffset = 384;
+            break;
+        case 4:
+            spriteYOffset = 512;
+            break;
+        case 5:
+            spriteYOffset = 640;
+            break;
+        case 6:
+            spriteYOffset = 768;
+            break;
+        }
+
+        //icon and stats
+        this->spriteBigSelectedIcon.setTextureRect(sf::IntRect(256,spriteYOffset,128,128));
+        this->spriteBigSelectedIcon.setPosition(mainWindowWidth/4.08, mainWindowHeigth/30);
+        window.draw(this->spriteBigSelectedIcon);
+        text.setString(objectName);
+        text.setCharacterSize(26);
+        text.setOutlineColor(sf::Color::Black);
+        text.setOutlineThickness(2.f);
+        text.setFillColor(sf::Color::White);
+        int textStartX = (mainWindowWidth/4.08) + (128+(mainWindowWidth/160));
+        int textStartY = mainWindowHeigth/30;
+        text.setPosition(textStartX, textStartY);
+        window.draw(text);
+        text.setCharacterSize(18);
+        std::stringstream resourcesLeftText;
+        resourcesLeftText << listOfObjects[this->objectSelectedId].nameOfResource() <<" left: " << listOfObjects[this->objectSelectedId].amountOfResourcesLeft();
+        text.setString(resourcesLeftText .str());
+        textStartY += 50;
+        text.setPosition(textStartX, textStartY);
+        window.draw(text);
+    }
     //Draw the buttons
     for (auto &Button : listOfButtons)
     {
@@ -1811,5 +1869,6 @@ void gameState::loadGame()
     this->toolBarWidth = mainWindowWidth-miniMapWidth;
     this->isPlacingBuilding = false;
     this->buildingSelectedId = -1;
+    this->objectSelectedId = -1;
 }
 

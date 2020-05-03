@@ -67,6 +67,7 @@ public:
     void selectUnit(int id);
     float getTime();
     int buildingSelectedId;
+    int objectSelectedId;
     mouseWorldCord getNextCord(int x, int y);
     sf::Font font;
     sf::Text text;

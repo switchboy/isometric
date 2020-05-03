@@ -107,6 +107,60 @@ void objects::drawObjectSprite(int spriteNumber, int i, int j)
     }
 }
 
+std::string objects::getName(){
+    switch(this->objectType)
+    {
+    case 0:
+        return "Cactus";
+        break;
+    case 1:
+        return "Cypress";
+        break;
+    case 2:
+        return "Maple";
+        break;
+    case 3:
+        return "Pine";
+        break;
+    case 4:
+        return "Stone";
+        break;
+    case 5:
+        return "Gold";
+        break;
+    case 6:
+        return "Berry bush";
+        break;
+    }
+}
+
+int objects::getType(){
+    return this->objectType;
+}
+
+int objects::amountOfResourcesLeft()
+{
+    return this->resourceLeft;
+}
+
+std::string objects::nameOfResource()
+{
+    switch(this->typeOfResource){
+    case 0:
+        return "Wood";
+        break;
+    case 1:
+        return "Food";
+        break;
+    case 2:
+        return "Stone";
+        break;
+    case 3:
+        return "Gold";
+        break;
+    }
+}
+
 void objects::drawObjectFootprint(int type, int mouseWorldX, int mouseWorldY)
 {
     if(!(mouseWorldX < 0) && !(mouseWorldY < 0) && !(mouseWorldX >= MAP_WIDTH) && !(mouseWorldY >= MAP_HEIGHT))

@@ -990,15 +990,17 @@ void gameState::interact()
                             {
                                 if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
                                 {
-                                    listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, i/5);
+                                    listOfActors[this->selectedUnits[i]].updateGoal(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalX, listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalY, i/5);
                                     listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
+                                    listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().tileId, listOfActors[this->selectedUnits[i]].getActorId());
                                 }
                             }
                             else
                             {
                                 if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
                                 {
-                                    listOfActors[this->selectedUnits[i]].updateGoal(this->mouseWorldPosition.x, this->mouseWorldPosition.y, 0);
+                                    listOfActors[this->selectedUnits[i]].updateGoal(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalX, listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalY, i/5);
+                                    listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().tileId, listOfActors[this->selectedUnits[i]].getActorId());
                                 }
                             }
                             if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
@@ -1551,7 +1553,6 @@ void gameState::drawToolbar()
             spriteYOffset = 0;
             break;
         }
-
         //icon and stats
         this->spriteBigSelectedIcon.setTextureRect(sf::IntRect(0,spriteYOffset,128,128));
         this->spriteBigSelectedIcon.setPosition(mainWindowWidth/4.08, mainWindowHeigth/30);
@@ -1590,7 +1591,6 @@ void gameState::drawToolbar()
         text.setString(teamId.str());
         text.setPosition(textStartX, textStartY);
         window.draw(text);
-
         //Show what the building is doing ATM
         if(!listOfBuildings[this->buildingSelectedId].getCompleted())
         {
@@ -1689,7 +1689,6 @@ void gameState::drawToolbar()
     }
     else if(this->objectSelectedId != -1)
     {
-
         std::string objectName = listOfObjects[this->objectSelectedId].getName();
         //Get the buttons
         switch(listOfObjects[this->objectSelectedId].getType())
@@ -1716,7 +1715,6 @@ void gameState::drawToolbar()
             spriteYOffset = 768;
             break;
         }
-
         //icon and stats
         this->spriteBigSelectedIcon.setTextureRect(sf::IntRect(256,spriteYOffset,128,128));
         this->spriteBigSelectedIcon.setPosition(mainWindowWidth/4.08, mainWindowHeigth/30);
@@ -1743,7 +1741,6 @@ void gameState::drawToolbar()
     {
         Button.drawButton();
     }
-
     window.setView(worldView);
 }
 
@@ -1788,10 +1785,10 @@ void gameState::drawGame()
 
     window.setView(worldView);
     //debugging
-//    for(int i = 0; i < listOfActors.size(); i++)
-//    {
-//        listOfActors[i].renderPath();
-//    }
+    for(int i = 0; i < listOfActors.size(); i++)
+    {
+        listOfActors[i].renderPath();
+    }
     window.display();
 }
 float gameState::getTime()

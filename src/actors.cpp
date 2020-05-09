@@ -1800,6 +1800,8 @@ void actors::buildBuilding()
                 this->isAtRecource = false;
                 this->isBuilding = false;
                 this->isBackAtOwnSquare = false;
+                this->ResourceBeingGatherd = 0;
+                this->commonGoal = false;
             }
             else
             {
@@ -1810,10 +1812,24 @@ void actors::buildBuilding()
     }
     else
     {
-        //Building not here!
-        this->isAtRecource = false;
-        this->isBuilding = false;
+        //het gebouw is er niet meer
+        if(this->isBackAtOwnSquare)
+        {
+            this->isAtRecource = false;
+            this->isBuilding = false;
+            this->isBackAtOwnSquare = false;
+            this->ResourceBeingGatherd = 0;
+            this->commonGoal = false;
+        }
+        else
+        {
+            this->walkBackToOwnSquare();
+        }
     }
+}
+
+int actors::getActorId(){
+    return this->actorId;
 }
 
 void actors::setIsBuildingTrue()

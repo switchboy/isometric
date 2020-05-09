@@ -2,12 +2,69 @@
 #include "gamestate.h"
 #include "player.h"
 #include "gametext.h"
-#include "actors.h"
+
 
 std::vector<footprintOfBuilding> footprintOfBuildings;
 std::vector<actorOrBuildingPrice> priceOfBuilding;
 std::vector<buildings> listOfBuildings;
 
+
+void buildings::fillAdjacentTiles()
+{
+    //The row above and below the building
+    for(int i = this->endXlocation-1; i <= this->startXlocation+1; i++)
+    {
+        int goalX;
+        if(i == this->endXlocation-1)
+        {
+            goalX = i +1;
+        }
+        else if(i == this->startXlocation+1)
+        {
+            goalX = i -1;
+        }
+        else
+        {
+            goalX = i;
+        }
+        adjacentTile newTileAbove = {this->adjacentTiles.size(), i, this->endYLocation-1, goalX, this->endYLocation, false,-1};
+        this->adjacentTiles.push_back(newTileAbove);
+        adjacentTile newTileBelow = {this->adjacentTiles.size(), i, this->startYLocation+1, goalX, this->startYLocation, false, -1};
+        this->adjacentTiles.push_back(newTileBelow);
+    }
+    //The row left and right of the building
+    for(int i =  this->startYLocation-footprintOfBuildings[this->buildingType].amountOfYFootprint; i <=  this->startYLocation; i++)
+    {
+        adjacentTile newTileLeft = {this->adjacentTiles.size(), this->endXlocation-1, i, this->endXlocation, i, false, -1 };
+        this->adjacentTiles.push_back(newTileLeft);
+        adjacentTile newTileRight = {this->adjacentTiles.size(), this->startXlocation+1, i, this->startXlocation, i, false, -1};
+        this->adjacentTiles.push_back(newTileRight);
+    }
+}
+
+
+adjacentTile buildings::getFreeBuildingTile()
+{
+    for(int i = 0; i < this->adjacentTiles.size(); i++)
+    {
+        if(!this->adjacentTiles[i].occupied)
+        {
+            if(currentGame.isPassable(this->adjacentTiles[i].tileX, this->adjacentTiles[i].tileY))
+            {
+                return this->adjacentTiles[i];
+            }
+        }
+    }
+}
+
+void buildings::claimFreeBuiildingTile(int id, int actorId)
+{
+    if(this->adjacentTiles[id].actorId == -1)
+    {
+        this->adjacentTiles[id].actorId = actorId;
+        this->adjacentTiles[id].occupied = true;
+    }
+}
 
 bool buildings::getCompleted()
 {
@@ -43,6 +100,8 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
     this->buildingType = type;
     this->startXlocation = startXlocation;
     this->startYLocation = startYLocation;
+    this->endXlocation = this->startXlocation-footprintOfBuildings[this->buildingType].amountOfXFootprint+1;
+    this->endYLocation = this->startYLocation-footprintOfBuildings[this->buildingType].amountOfYFootprint+1;
     this->buildingId = buildingId;
     this->ownedByPlayer = team;
     this->buildingCompleted = false;
@@ -89,6 +148,7 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         this->amountOfAnimationSprites = 0;
         break;
     }
+    fillAdjacentTiles();
 }
 
 int buildings::getTeam()
@@ -347,6 +407,7 @@ worldCords findEmptySpot(worldCords startCords)
         std::vector<Cells> cellsList;
         cellsList.reserve(MAP_HEIGHT*MAP_WIDTH);
         int startCell = (startCords.x*MAP_HEIGHT)+startCords.y;
+        updateCells(0, startCell, cellsList);
         std::list<Cells*> listToCheck;
         addNeighbours(startCell, cellsList);
         cellsList[startCell].visited = true;

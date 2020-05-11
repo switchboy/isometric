@@ -6,6 +6,7 @@
 #include <future>
 #include <string>
 #include "globalfunctions.h"
+#include "gametext.h"
 
 std::mutex mapArrayMutex;
 std::vector<actorOrBuildingPrice> priceOfActor;
@@ -413,6 +414,11 @@ void actors::updateGoal(int i, int j, int waitTime)
     //check if values are in bounds
     if((i >= 0 && i < MAP_WIDTH) && (j >= 0 && j < MAP_HEIGHT))
     {
+        if(this->isBuilding)
+        {
+            gameText.addNewMessage("empty slot", 0);
+            listOfBuildings[this->buildingId].removeActorFromBuildingTile(this->actorId);
+        }
         this->actorGoal[0] = i;
         this->actorGoal[1] = j;
         this->waitForAmountOfFrames = waitTime;
@@ -421,6 +427,7 @@ void actors::updateGoal(int i, int j, int waitTime)
         this->busyWalking = false;
         this->pathFound = false;
         this->isAtRecource = false;
+        this->isBackAtOwnSquare = false;
         this->offSetX = 0.0f;
         this->offSetY = 0.0f;
     }
@@ -605,7 +612,7 @@ void actors::update()
                                 }
                             }
                         }
-                        else if(this->retries < 5)
+                        else if(this->retries < 10)
                         {
                             if(currentGame.elapsedTime-this->timeLastAttempt > 1)
                             {
@@ -627,7 +634,7 @@ void actors::update()
                                 updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
                                 this->isWalkingToUnloadingPoint = true;
                                 this->reachedUnloadingPoint = false;
-                                this->retries = 4;
+                                this->retries = 0;
                             }
                             else
                             {
@@ -683,7 +690,7 @@ void actors::update()
                             if(this->dropOffTile.isSet)
                             {
                                 updateGoal(this->dropOffTile.locationX, this->dropOffTile.locationY, 0);
-                                this->retries = 4;
+                                this->retries = 0;
                                 this->isWalkingToUnloadingPoint = true;
                                 this->reachedUnloadingPoint = false;
                             }
@@ -883,6 +890,7 @@ void actors::walkBackToOwnSquare()
     {
         this->isBackAtOwnSquare = true;
         this->isAtRecource = false;
+        this->isBuilding = false;
         this->timeStartedWalkingToRecource = 0.0f;
         this->timeStartedGatheringRecource = currentGame.elapsedTime;
         this->offSetX = 0;
@@ -1214,18 +1222,13 @@ nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
     std::list <nearestBuildingTile> listOfDropOffLocations;
     for(int i = 0; i < listOfBuildings.size(); i++)
     {
-        if((listOfBuildings[i].getRecievesWhichResources() == Resource || listOfBuildings[i].getRecievesWhichResources() == 4)
-                && listOfBuildings[i].getTeam() == this->actorTeam)
+        if((listOfBuildings[i].getRecievesWhichResources() == Resource || listOfBuildings[i].getRecievesWhichResources() == 4) && listOfBuildings[i].getTeam() == this->actorTeam)
         {
-            for(int x = 0; x < footprintOfBuildings[listOfBuildings[i].getType()].amountOfXFootprint; x++)
+            std::vector<adjacentTile> tileList = listOfBuildings[i].getDropOffTiles();
+            for(int j = 0; j < tileList.size(); j++)
             {
-                for(int y = 0; y < footprintOfBuildings[listOfBuildings[i].getType()].amountOfYFootprint; y++)
-                {
-                    int tempX = listOfBuildings[i].getLocationX()-x;
-                    int tempY = listOfBuildings[i].getLocationY()-y;
-                    float tempDeltaDistance = dist(this->actorCords[0], this->actorCords[1], tempX, tempY);
-                    listOfDropOffLocations.push_back({tempDeltaDistance, tempX, tempY, listOfBuildings[i].getBuildingId(), true});
-                }
+                float tempDeltaDistance = dist(this->actorCords[0], this->actorCords[1], tileList[j].goalX, tileList[j].goalY);
+                listOfDropOffLocations.push_back({tempDeltaDistance, tileList[j].goalX, tileList[j].goalY, listOfBuildings[i].getBuildingId(), true});
             }
         }
     }
@@ -1794,52 +1797,39 @@ void actors::buildBuilding()
         }
         else
         {
-            if(this->isBackAtOwnSquare)
-            {
-                //Het gebouw is af!
-                this->isAtRecource = false;
-                this->isBuilding = false;
-                this->isBackAtOwnSquare = false;
-                this->ResourceBeingGatherd = 0;
-                this->commonGoal = false;
-            }
-            else
+            if(!this->isBackAtOwnSquare)
             {
                 this->walkBackToOwnSquare();
             }
-
+            listOfBuildings[this->buildingId].removeActorFromBuildingTile(this->actorId);
         }
     }
     else
     {
         //het gebouw is er niet meer
-        if(this->isBackAtOwnSquare)
-        {
-            this->isAtRecource = false;
-            this->isBuilding = false;
-            this->isBackAtOwnSquare = false;
-            this->ResourceBeingGatherd = 0;
-            this->commonGoal = false;
-        }
-        else
+        if(!this->isBackAtOwnSquare)
         {
             this->walkBackToOwnSquare();
         }
+        listOfBuildings[this->buildingId].removeActorFromBuildingTile(this->actorId);
     }
 }
 
-int actors::getActorId(){
+int actors::getActorId()
+{
     return this->actorId;
 }
 
-void actors::setIsBuildingTrue()
+void actors::setIsBuildingTrue(int buildingId)
 {
     this->isBuilding = true;
+    this->buildingId = buildingId;
     this->isGatheringRecources = false;
     this->ResourceBeingGatherd = 1;
     this->gatheringResourcesAt[0] = this->actorGoal[0];
     this->gatheringResourcesAt[1] = this->actorGoal[1];
 }
+
 void actors::renderPath()
 {
     std::list<routeCell>::iterator it;

@@ -14,34 +14,52 @@ void buildings::fillAdjacentTiles()
     //The row above and below the building
     for(int i = this->endXlocation-1; i <= this->startXlocation+1; i++)
     {
-        int goalX;
-        if(i == this->endXlocation-1)
+        if(i >= 0 && i <= MAP_WIDTH)
         {
-            goalX = i +1;
+            int goalX;
+            if(i == this->endXlocation-1)
+            {
+                goalX = i +1;
+            }
+            else if(i == this->startXlocation+1)
+            {
+                goalX = i -1;
+            }
+            else
+            {
+                goalX = i;
+            }
+            adjacentTile newTileAbove = {this->adjacentTiles.size(), i, this->endYLocation-1, goalX, this->endYLocation, false,-1};
+            this->adjacentTiles.push_back(newTileAbove);
+            adjacentTile newTileBelow = {this->adjacentTiles.size(), i, this->startYLocation+1, goalX, this->startYLocation, false, -1};
+            this->adjacentTiles.push_back(newTileBelow);
         }
-        else if(i == this->startXlocation+1)
-        {
-            goalX = i -1;
-        }
-        else
-        {
-            goalX = i;
-        }
-        adjacentTile newTileAbove = {this->adjacentTiles.size(), i, this->endYLocation-1, goalX, this->endYLocation, false,-1};
-        this->adjacentTiles.push_back(newTileAbove);
-        adjacentTile newTileBelow = {this->adjacentTiles.size(), i, this->startYLocation+1, goalX, this->startYLocation, false, -1};
-        this->adjacentTiles.push_back(newTileBelow);
     }
     //The row left and right of the building
     for(int i =  this->startYLocation-footprintOfBuildings[this->buildingType].amountOfYFootprint; i <=  this->startYLocation; i++)
     {
-        adjacentTile newTileLeft = {this->adjacentTiles.size(), this->endXlocation-1, i, this->endXlocation, i, false, -1 };
-        this->adjacentTiles.push_back(newTileLeft);
-        adjacentTile newTileRight = {this->adjacentTiles.size(), this->startXlocation+1, i, this->startXlocation, i, false, -1};
-        this->adjacentTiles.push_back(newTileRight);
+        if(i >= 0 && i <= MAP_HEIGHT)
+        {
+            adjacentTile newTileLeft = {this->adjacentTiles.size(), this->endXlocation-1, i, this->endXlocation, i, false, -1 };
+            this->adjacentTiles.push_back(newTileLeft);
+            adjacentTile newTileRight = {this->adjacentTiles.size(), this->startXlocation+1, i, this->startXlocation, i, false, -1};
+            this->adjacentTiles.push_back(newTileRight);
+        }
     }
 }
 
+void buildings::removeActorFromBuildingTile(int actorId)
+{
+    for(int i = 0; i < this->adjacentTiles.size(); i++)
+    {
+        if(this->adjacentTiles[i].actorId == actorId)
+        {
+            this->adjacentTiles[i].occupied = false;
+            this->adjacentTiles[i].actorId = -1;
+        }
+    }
+
+}
 
 adjacentTile buildings::getFreeBuildingTile()
 {
@@ -55,7 +73,25 @@ adjacentTile buildings::getFreeBuildingTile()
             }
         }
     }
+    //geen vrije tegel!
+    return {-1, -1, -1, -1, -1, false,-1};
 }
+
+
+
+std::vector<adjacentTile> buildings::getDropOffTiles()
+{
+    std::vector<adjacentTile> tileList;
+    for(int i = 0; i < this->adjacentTiles.size(); i++)
+    {
+        if(currentGame.isPassable(this->adjacentTiles[i].tileX, this->adjacentTiles[i].tileY))
+        {
+            tileList.push_back(this->adjacentTiles[i]);
+        }
+    }
+    return tileList;
+}
+
 
 void buildings::claimFreeBuiildingTile(int id, int actorId)
 {

@@ -26,7 +26,7 @@ void gametext::addNewMessage(std::string message, int color)
 void gametext::drawMessages()
 {
     int charSize = 16;
-    int startPositionY = (mainWindowHeigth/2)-(15*(charSize+2)) ;
+    int startPositionY = (mainWindowHeigth/2)-(20*(charSize+2)) ;
     currentGame.text.setCharacterSize(charSize);
     currentGame.text.setOutlineColor(sf::Color::Black);
     currentGame.text.setOutlineThickness(1.f);

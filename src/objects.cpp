@@ -107,7 +107,8 @@ void objects::drawObjectSprite(int spriteNumber, int i, int j)
     }
 }
 
-std::string objects::getName(){
+std::string objects::getName()
+{
     switch(this->objectType)
     {
     case 0:
@@ -134,7 +135,8 @@ std::string objects::getName(){
     }
 }
 
-int objects::getType(){
+int objects::getType()
+{
     return this->objectType;
 }
 
@@ -145,7 +147,8 @@ int objects::amountOfResourcesLeft()
 
 std::string objects::nameOfResource()
 {
-    switch(this->typeOfResource){
+    switch(this->typeOfResource)
+    {
     case 0:
         return "Wood";
         break;

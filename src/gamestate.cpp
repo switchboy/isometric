@@ -7,6 +7,7 @@
 #include <sstream>
 #include <future>
 #include "gametext.h"
+#include "buildings.h"
 
 
 void gameState::drawMousePosition(int x,int y, int noProblem)
@@ -799,7 +800,7 @@ void gameState::interact()
                                 }
                                 if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
                                 {
-                                    listOfActors[this->selectedUnits[i]].setIsBuildingTrue();
+                                    listOfActors[this->selectedUnits[i]].setIsBuildingTrue(newBuilding.getBuildingId());
                                 }
                             }
                         }
@@ -986,26 +987,30 @@ void gameState::interact()
                     {
                         for(int i = 0; i < this->selectedUnits.size(); i++)
                         {
-                            if(this->selectedUnits.size() > 1)
+                            adjacentTile tempTile = listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile();
+                            if(tempTile.tileId != -1)
                             {
+                                if(this->selectedUnits.size() > 1)
+                                {
+                                    if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                                    {
+                                        listOfActors[this->selectedUnits[i]].updateGoal(tempTile.goalX, tempTile.goalY, i/5);
+                                        listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
+                                        listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(tempTile.tileId, listOfActors[this->selectedUnits[i]].getActorId());
+                                    }
+                                }
+                                else
+                                {
+                                    if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
+                                    {
+                                        listOfActors[this->selectedUnits[i]].updateGoal(tempTile.goalX, tempTile.goalY, 0);
+                                        listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(tempTile.tileId, listOfActors[this->selectedUnits[i]].getActorId());
+                                    }
+                                }
                                 if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
                                 {
-                                    listOfActors[this->selectedUnits[i]].updateGoal(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalX, listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalY, i/5);
-                                    listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
-                                    listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().tileId, listOfActors[this->selectedUnits[i]].getActorId());
+                                    listOfActors[this->selectedUnits[i]].setIsBuildingTrue(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getBuildingId());
                                 }
-                            }
-                            else
-                            {
-                                if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
-                                {
-                                    listOfActors[this->selectedUnits[i]].updateGoal(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalX, listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().goalY, i/5);
-                                    listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile().tileId, listOfActors[this->selectedUnits[i]].getActorId());
-                                }
-                            }
-                            if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
-                            {
-                                listOfActors[this->selectedUnits[i]].setIsBuildingTrue();
                             }
                         }
                     }

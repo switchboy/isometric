@@ -2,6 +2,7 @@
 #include "gamestate.h"
 #include "player.h"
 #include "gametext.h"
+#include <iostream>
 
 
 std::vector<footprintOfBuilding> footprintOfBuildings;
@@ -162,7 +163,7 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesStone= false;
         recievesGold = false;
         recievesFood = false;
-        buildingPointsNeeded = 10;
+        buildingPointsNeeded = 25;
         buildingPointsRecieved = 0;
         supportsPopulationOf = 5;
         this->offSetYStore = 0;
@@ -177,7 +178,7 @@ buildings::buildings(int type, int startXlocation, int startYLocation, int build
         recievesStone= true;
         recievesGold = true;
         recievesFood = true;
-        buildingPointsNeeded = 30;
+        buildingPointsNeeded = 150;
         buildingPointsRecieved = 0;
         supportsPopulationOf = 10;
         this->offSetYStore = 0;
@@ -358,6 +359,12 @@ void  buildings::getTask(bool isResearch, int idOfUnitOrResearch, int production
     if(this->productionQueue.size() < 5 )
     {
         this->productionQueue.push_back({isResearch, idOfUnitOrResearch, 0, productionPointsNeeded, 0});
+        if(!isResearch){
+            currentPlayer.substractResources( 1, priceOfActor[idOfUnitOrResearch].food);
+            currentPlayer.substractResources( 0, priceOfActor[idOfUnitOrResearch].wood);
+            currentPlayer.substractResources( 2, priceOfActor[idOfUnitOrResearch].stone);
+            currentPlayer.substractResources( 3, priceOfActor[idOfUnitOrResearch].gold);
+        }
     }
     else
     {
@@ -385,48 +392,47 @@ struct worldCords
 
 
 
-void addNeighboursOfImpassableNeighbours(int& i, std::vector<Cells>& cellsList, std::list<Cells*>& listToCheck)
+void addNeighboursOfImpassableNeighbours(int& i, std::vector<Cells> &cellsList, std::list<Cells*>& listToCheck)
 {
-    int tempId;
     if(cellsList[i].positionX > 0)
     {
-        tempId = i-MAP_HEIGHT;
-        addNeighbours(tempId, cellsList);
+        cellsList[i-MAP_HEIGHT].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i-MAP_HEIGHT]);
     }
     if(cellsList[i].positionX < MAP_WIDTH-1)
     {
-        tempId = i+MAP_HEIGHT;
-        addNeighbours(tempId, cellsList);
+        cellsList[i+MAP_HEIGHT].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i+MAP_HEIGHT]);
     }
     if(cellsList[i].positionY > 0)
     {
-        tempId = i-1;
-        addNeighbours(tempId, cellsList);
+        cellsList[i-1].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i-1]);
     }
     if(cellsList[i].positionY != MAP_HEIGHT-1)
     {
-        tempId = i+1;
-        addNeighbours(tempId, cellsList);
+        cellsList[i+1].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i+1]);
     }
     if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX < MAP_WIDTH-1)
     {
-        tempId = i+1+MAP_HEIGHT;
-        addNeighbours(tempId, cellsList);
+        cellsList[i+1+MAP_HEIGHT].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i+1+MAP_HEIGHT]);
     }
     if(cellsList[i].positionY >0 && cellsList[i].positionX < MAP_WIDTH-1)
     {
-        tempId = i-1+MAP_HEIGHT;
-        addNeighbours(tempId, cellsList);
+        cellsList[i-1+MAP_HEIGHT].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i-1+MAP_HEIGHT]);
     }
     if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX > 0)
     {
-        tempId = i+1-MAP_HEIGHT;
-        addNeighbours(tempId, cellsList);
+        cellsList[i+1-MAP_HEIGHT].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i+1-MAP_HEIGHT]);
     }
     if(cellsList[i].positionY >0 && cellsList[i].positionX > 0)
     {
-        tempId = i-1-MAP_HEIGHT;
-        addNeighbours(tempId, cellsList);
+        cellsList[i-1-MAP_HEIGHT].addNeighbours(cellsList);
+        listToCheck.push_back(&cellsList[i-1-MAP_HEIGHT]);
     }
 }
 
@@ -443,25 +449,23 @@ worldCords findEmptySpot(worldCords startCords)
         std::vector<Cells> cellsList;
         cellsList.reserve(MAP_HEIGHT*MAP_WIDTH);
         int startCell = (startCords.x*MAP_HEIGHT)+startCords.y;
-        updateCells(0, startCell, cellsList);
+        updateCells(-1, -1, cellsList);
         std::list<Cells*> listToCheck;
-        addNeighbours(startCell, cellsList);
+        cellsList[startCell].addNeighbours(cellsList);
         cellsList[startCell].visited = true;
         listToCheck.push_back(&cellsList[startCell]);
         bool freeCellFound = false;
         while(!freeCellFound && !listToCheck.empty())
         {
-            for(int q = 0; q < 8; q++)
+            for (std::vector<int>::const_iterator iterator =  (*listToCheck.front()).neighbours.begin(), end =  (*listToCheck.front()).neighbours.end(); iterator != end; ++iterator)
             {
-                if((*listToCheck.front()).neighbours[q] != -1)
-                {
-                    freeCellFound = true;
-                    int newCellId = (*listToCheck.front()).neighbours[q];
-                    return {cellsList[newCellId].positionX, cellsList[newCellId].positionY};
-                }
+                std::cout << cellsList[*iterator].cellId<< " " << cellsList[startCell].cellId << "\n";
+                freeCellFound = true;
+                return {cellsList[*iterator].positionX, cellsList[*iterator].positionY};
             }
             if(!freeCellFound)
             {
+                std::cout << (*listToCheck.front()).cellId << "\n";
                 addNeighboursOfImpassableNeighbours((*listToCheck.front()).cellId, cellsList, listToCheck);
             }
             listToCheck.pop_front();

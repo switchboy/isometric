@@ -1819,16 +1819,16 @@ void gameState::loadBuildings()
 {
     //food, wood, stone, gold
     footprintOfBuildings.push_back({2,2});//house 0
-    priceOfBuilding.push_back({0,200,0,0});
+    priceOfBuilding.push_back({0,25,0,0});
     footprintOfBuildings.push_back({4,4});//towncenter 1
-    priceOfBuilding.push_back({250,400,100,100});
+    priceOfBuilding.push_back({0,300,100,0});
 }
 
 
 void loadActors()
 {
     //food, wood, stone, gold
-    priceOfActor.push_back({200,0,0,0}); //villager 0
+    priceOfActor.push_back({50,0,0,0}); //villager 0
 }
 
 void gameState::loadGame()

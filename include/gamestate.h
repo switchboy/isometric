@@ -36,6 +36,17 @@ struct actorOrBuildingPrice
 extern std::vector<actorOrBuildingPrice> priceOfBuilding;
 extern std::vector<actorOrBuildingPrice> priceOfActor;
 
+struct adjacentTile
+{
+    int tileId;
+    int tileX;
+    int tileY;
+    int goalX;
+    int goalY;
+    bool occupied;
+    int actorId;
+};
+
 mouseWorldCord toWorldMousePosition(int mouseX, int mouseY);
 
 class gameState

@@ -6,14 +6,17 @@
 #include <SFML/System.hpp>
 #include <thread>
 
-struct Cells
+class Cells
 {
+public:
+
     int positionX, positionY, parentCellId, cummulativeCost, cellId, backParent;
     double costToGoal, totalCostGuess;
     bool visited = false;
     bool visitedBack = false;
     bool obstacle = false;
-    int neighbours[8];
+    std::vector<int> neighbours;
+    void addNeighbours(std::vector<Cells> &cellsList);
 };
 
 struct nearestBuildingTile
@@ -25,7 +28,7 @@ struct nearestBuildingTile
     bool isSet;
 };
 
-extern void addNeighbours(int& i, std::vector<Cells>& cellsList);
+extern void updateCells(int goalId, int startId, std::vector<Cells> &cellsList);
 
 struct islandCell
 {
@@ -59,7 +62,7 @@ public:
     void renderPath();
     void setCommonGoalTrue();
     void setGatheringRecource(bool flag);
-    void setIsBuildingTrue();
+    void setIsBuildingTrue(int buildingId);
     bool canTargetBeReached();
     void checkCollision(int newCellId);
     nearestBuildingTile findNearestDropOffPoint(int Resource);
@@ -68,6 +71,7 @@ public:
     bool isInitialized();
     int getTeam();
     int getType();
+    int getActorId();
     std::pair<int, int> getHealth();
     bool findNearestSimilairResource();
     void walkBackToOwnSquare();
@@ -86,6 +90,7 @@ private:
     int actorTeam;
     int actorHealth;
     bool actorAlive;
+    int buildingId;
     int actorId;
     int hitPoints;
     int totalHitPoints;
@@ -136,6 +141,7 @@ private:
     nearestBuildingTile dropOffTile;
     std::list<routeCell> route;
     bool hasMoved;
+    std::list <nearestBuildingTile> listOfDropOffLocations;
 
 
 

@@ -446,14 +446,14 @@
 
 1584718378 d:\programming\isometric\include\animation.h
 
-1588533399 d:\programming\isometric\include\gamestate.h
+1589201631 d:\programming\isometric\include\gamestate.h
 	<SFML/Graphics.hpp>
 	"globalfunctions.h"
 	"button.h"
 	<list>
 	<sstream>
 
-1588499967 source:d:\programming\isometric\src\gamestate.cpp
+1589200396 source:d:\programming\isometric\src\gamestate.cpp
 	"gamestate.h"
 	"buildings.h"
 	"objects.h"
@@ -463,6 +463,7 @@
 	<sstream>
 	<future>
 	"gametext.h"
+	"buildings.h"
 
 1584568997 d:\programming\isometric\include\commonfunctions.h
 	<SFML/Graphics.hpp>
@@ -475,17 +476,18 @@
 	"gamestate.h"
 	"globals.h"
 
-1588528847 source:d:\programming\isometric\src\buildings.cpp
+1589373815 source:d:\programming\isometric\src\buildings.cpp
 	"buildings.h"
 	"gamestate.h"
 	"player.h"
 	"gametext.h"
-	"actors.h"
+	<iostream>
 
-1588499967 d:\programming\isometric\include\buildings.h
+1589373081 d:\programming\isometric\include\buildings.h
 	<vector>
 	<list>
 	<string>
+	"actors.h"
 
 1584569054 d:\programming\isometric\include\globals.h
 
@@ -493,13 +495,13 @@
 	<vector>
 	<string>
 
-1588535080 source:d:\programming\isometric\src\objects.cpp
+1589201631 source:d:\programming\isometric\src\objects.cpp
 	"objects.h"
 	"gamestate.h"
 
 1584720289 d:\programming\isometric\globals.h
 
-1588499673 source:d:\programming\isometric\src\actors.cpp
+1589375574 source:d:\programming\isometric\src\actors.cpp
 	"actors.h"
 	"objects.h"
 	"player.h"
@@ -508,8 +510,9 @@
 	<future>
 	<string>
 	"globalfunctions.h"
+	"gametext.h"
 
-1588517118 d:\programming\isometric\include\actors.h
+1589366092 d:\programming\isometric\include\actors.h
 	<cmath>
 	<list>
 	"gamestate.h"
@@ -531,7 +534,7 @@
 1588428382 d:\programming\isometric\include\button.h
 	<SFML/Graphics.hpp>
 
-1588434334 source:d:\programming\isometric\src\button.cpp
+1589375574 source:d:\programming\isometric\src\button.cpp
 	"button.h"
 	"gamestate.h"
 	<iostream>
@@ -541,7 +544,7 @@
 	"actors.h"
 	"buildings.h"
 
-1588067443 source:d:\programming\isometric\src\gametext.cpp
+1589200642 source:d:\programming\isometric\src\gametext.cpp
 	"gametext.h"
 	"gamestate.h"
 

@@ -12,7 +12,7 @@ std::mutex mapArrayMutex;
 std::vector<actorOrBuildingPrice> priceOfActor;
 std::list<int> listOfActorsWhoNeedAPath;
 
-void updateCells(int goalId, int startId, std::vector<Cells>& cellsList)
+void updateCells(int goalId, int startId, std::vector<Cells> &cellsList)
 {
     int n = 0;
     for(int i = 0; i < MAP_WIDTH; i++)
@@ -45,131 +45,83 @@ void updateCells(int goalId, int startId, std::vector<Cells>& cellsList)
 }
 
 
-void addNeighbours(int& i, std::vector<Cells>& cellsList)
+void Cells::addNeighbours(std::vector<Cells> &cellsList)
 {
-    if(cellsList[i].positionX > 0)
+    if(this->positionX > 0)
     {
         //de cell links kan toegevoegd worden
-        if(!cellsList[i-MAP_HEIGHT].obstacle)
+        if(!cellsList[this->cellId-MAP_HEIGHT].obstacle)
         {
-            cellsList[i].neighbours[0] = i-MAP_HEIGHT;
-        }
-        else
-        {
-            cellsList[i].neighbours[0] = -1;
+            this->neighbours.push_back(this->cellId-MAP_HEIGHT);
         }
     }
-    if(cellsList[i].positionX < MAP_WIDTH-1)
+    if(this->positionX < MAP_WIDTH-1)
     {
         //de cell rechts kan toegevoegd worden
-        if(!cellsList[i+MAP_HEIGHT].obstacle)
+        if(!cellsList[this->cellId+MAP_HEIGHT].obstacle)
         {
-            cellsList[i].neighbours[1] =i+MAP_HEIGHT;
-        }
-        else
-        {
-            cellsList[i].neighbours[1] = -1;
+            this->neighbours.push_back(this->cellId+MAP_HEIGHT);
         }
     }
-    if(cellsList[i].positionY > 0)
+    if(this->positionY > 0)
     {
         //de cell erboven kan toegevogd worden
-        if(!cellsList[i-1].obstacle)
+        if(!cellsList[this->cellId-1].obstacle)
         {
-            cellsList[i].neighbours[2] =i-1;
-        }
-        else
-        {
-            cellsList[i].neighbours[2] = -1;
+            this->neighbours.push_back(this->cellId-1);
         }
     }
-    if(cellsList[i].positionY != MAP_HEIGHT-1)
+    if(this->positionY != MAP_HEIGHT-1)
     {
         //de cell eronder kan toegevoegd worden
-        if(!cellsList[i+1].obstacle)
+        if(!cellsList[this->cellId+1].obstacle)
         {
-            cellsList[i].neighbours[3] =i+1;
-        }
-        else
-        {
-            cellsList[i].neighbours[3] = -1;
+            this->neighbours.push_back(this->cellId+1);
         }
     }
     //schuin gaan...
-    if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX < MAP_WIDTH-1)
+    if(this->positionY != MAP_HEIGHT-1 && this->positionX < MAP_WIDTH-1)
     {
         //de cell rechtsonder kan toegevoegd worden
-        if(!cellsList[i+1+MAP_HEIGHT].obstacle )
+        if(!cellsList[this->cellId+1+MAP_HEIGHT].obstacle )
         {
-            if(!(cellsList[i+1].obstacle  && cellsList[i+MAP_HEIGHT].obstacle))
+            if(!(cellsList[this->cellId+1].obstacle  && cellsList[this->cellId+MAP_HEIGHT].obstacle))
             {
-                cellsList[i].neighbours[4] =i+1+MAP_HEIGHT;
+                this->neighbours.push_back(this->cellId+1+MAP_HEIGHT);
             }
-            else
-            {
-                cellsList[i].neighbours[4] = -1;
-            }
-        }
-        else
-        {
-            cellsList[i].neighbours[4] = -1;
         }
     }
-    if(cellsList[i].positionY >0 && cellsList[i].positionX < MAP_WIDTH-1)
+    if(this->positionY >0 && this->positionX < MAP_WIDTH-1)
     {
         //de cell rechtsboven kan toegevoegd worden
-        if(!cellsList[i-1+MAP_HEIGHT].obstacle)
+        if(!cellsList[this->cellId-1+MAP_HEIGHT].obstacle)
         {
-            if(!(cellsList[i-1].obstacle && cellsList[i+MAP_HEIGHT].obstacle))
+            if(!(cellsList[this->cellId-1].obstacle && cellsList[this->cellId+MAP_HEIGHT].obstacle))
             {
-                cellsList[i].neighbours[5] =i-1+MAP_HEIGHT;
+                this->neighbours.push_back(this->cellId-1+MAP_HEIGHT);
             }
-            else
-            {
-                cellsList[i].neighbours[5] = -1;
-            }
-        }
-        else
-        {
-            cellsList[i].neighbours[5] = -1;
         }
     }
-    if(cellsList[i].positionY != MAP_HEIGHT-1 && cellsList[i].positionX > 0)
+    if(this->positionY != MAP_HEIGHT-1 && this->positionX > 0)
     {
         //de cell linksonder kan toegevoegd worden
-        if(!cellsList[i+1-MAP_HEIGHT].obstacle)
+        if(!cellsList[this->cellId+1-MAP_HEIGHT].obstacle)
         {
-            if(!(cellsList[i+1].obstacle && cellsList[i-MAP_HEIGHT].obstacle))
+            if(!(cellsList[this->cellId+1].obstacle && cellsList[this->cellId-MAP_HEIGHT].obstacle))
             {
-                cellsList[i].neighbours[6] =i+1-MAP_HEIGHT;
+                this->neighbours.push_back(this->cellId+1-MAP_HEIGHT);
             }
-            else
-            {
-                cellsList[i].neighbours[6] = -1;
-            }
-        }
-        else
-        {
-            cellsList[i].neighbours[6] = -1;
         }
     }
-    if(cellsList[i].positionY >0 && cellsList[i].positionX > 0)
+    if(this->positionY >0 && this->positionX > 0)
     {
         //de cell rechtsboven kan toegevoegd worden
-        if(!cellsList[i-1-MAP_HEIGHT].obstacle)
+        if(!cellsList[this->cellId-1-MAP_HEIGHT].obstacle)
         {
-            if(!(cellsList[i-MAP_HEIGHT].obstacle && cellsList[i-1].obstacle))
+            if(!(cellsList[this->cellId-MAP_HEIGHT].obstacle && cellsList[this->cellId-1].obstacle))
             {
-                cellsList[i].neighbours[7] =i-1-MAP_HEIGHT;
+                this->neighbours.push_back(this->cellId-1-MAP_HEIGHT);
             }
-            else
-            {
-                cellsList[i].neighbours[7] = -1;
-            }
-        }
-        else
-        {
-            cellsList[i].neighbours[7] = -1;
         }
     }
 }
@@ -1320,7 +1272,7 @@ void actors::pathAStar()
     else
     {
         this->pathFound = false;
-        addNeighbours(startCell, cellsList);
+        cellsList[startCell].addNeighbours(cellsList);
         cellsList[startCell].visited = true;
         listToCheck.push_back(&cellsList[startCell]);
     }
@@ -1345,38 +1297,34 @@ void actors::pathAStar()
         }
         else if(!listToCheck.empty())
         {
-            for(int q = 0; q < 8; q++)
+            for (std::vector<int>::const_iterator iterator =  (*listToCheck.front()).neighbours.begin(), end =  (*listToCheck.front()).neighbours.end(); iterator != end; ++iterator)
             {
-                if((*listToCheck.front()).neighbours[q] != -1)
+                //We have found neighbours!
+                //check if neighbours was found before
+                if(!cellsList[*iterator].visited)
                 {
-                    int newCellId = (*listToCheck.front()).neighbours[q];
-                    //We have found neighbours!
-                    //check if neighbours was found before
-                    if(!cellsList[newCellId].visited)
+                    //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
+                    cellsList[*iterator].addNeighbours(cellsList);
+                    //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
+                    cellsList[*iterator].parentCellId = (*listToCheck.front()).cellId;
+                    //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
+                    cellsList[*iterator].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
+                    //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
+                    listToCheck.push_back(&cellsList[*iterator]);
+                    //Bereken de afstand naar het doel
+                    cellsList[*iterator].costToGoal = dist(cellsList[*iterator].positionX,cellsList[*iterator].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
+                    cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
+                    cellsList[*iterator].visited = true;
+                }
+                else
+                {
+                    //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
+                    if((*listToCheck.front()).cummulativeCost+1 < cellsList[*iterator].cummulativeCost)
                     {
-                        //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
-                        addNeighbours(newCellId, cellsList);
-                        //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
-                        cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
-                        //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
-                        cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
-                        //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
-                        listToCheck.push_back(&cellsList[newCellId]);
-                        //Bereken de afstand naar het doel
-                        cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
-                        cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
-                        cellsList[newCellId].visited = true;
-                    }
-                    else
-                    {
-                        //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
-                        if((*listToCheck.front()).cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
-                        {
-                            //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
-                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
-                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
-                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
-                        }
+                        //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
+                        cellsList[*iterator].parentCellId = (*listToCheck.front()).cellId;
+                        cellsList[*iterator].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
+                        cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
                     }
                 }
             }
@@ -1435,8 +1383,8 @@ void actors::pathAStarBiDi()
     else
     {
         this->pathFound = false;
-        addNeighbours(startCell, cellsList);
-        addNeighbours(endCell, cellsList);
+        cellsList[startCell].addNeighbours(cellsList);
+        cellsList[endCell].addNeighbours(cellsList);
         cellsList[startCell].visited = true;
         cellsList[endCell].visitedBack = true;
         listToCheck.push_back(&cellsList[startCell]);
@@ -1485,95 +1433,87 @@ void actors::pathAStarBiDi()
         }
         else if(!listToCheck.empty() && !listToCheckBack.empty())
         {
-            for(int q = 0; q < 8; q++)
+            for (std::vector<int>::const_iterator iterator =  (*listToCheck.front()).neighbours.begin(), end =  (*listToCheck.front()).neighbours.end(); iterator != end; ++iterator)
             {
-                if((*listToCheck.front()).neighbours[q] != -1)
+                //check if neighbours was found before
+                if(!cellsList[*iterator].visited)
                 {
-                    //We have found neighbours!
-                    int newCellId = (*listToCheck.front()).neighbours[q];
-                    //check if neighbours was found before
-                    if(!cellsList[newCellId].visited)
+                    if(!cellsList[*iterator].visitedBack)
                     {
-                        if(!cellsList[newCellId].visitedBack)
-                        {
-                            //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
-                            addNeighbours(newCellId, cellsList);
-                            //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
-                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
-                            //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
-                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
-                            //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
-                            listToCheck.push_back(&cellsList[newCellId]);
-                            //Bereken de afstand naar het doel
-                            cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
-                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
-                            cellsList[newCellId].visited = true;
-                        }
-                        else
-                        {
-                            //deze cell is door de andere kant gevonden!
-                            collisionCell = newCellId;
-                            cellsList[newCellId].visited = true;
-                            cellsList[newCellId].visitedBack = true;
-                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
-                            q = 8;
-                        }
-
+                        //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
+                        cellsList[*iterator].addNeighbours(cellsList);
+                        //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
+                        cellsList[*iterator].parentCellId = (*listToCheck.front()).cellId;
+                        //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
+                        cellsList[*iterator].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
+                        //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
+                        listToCheck.push_back(&cellsList[*iterator]);
+                        //Bereken de afstand naar het doel
+                        cellsList[*iterator].costToGoal = dist(cellsList[*iterator].positionX,cellsList[*iterator].positionY,cellsList[endCell].positionX,cellsList[endCell].positionY);
+                        cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
+                        cellsList[*iterator].visited = true;
                     }
                     else
                     {
-                        //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
-                        if((*listToCheck.front()).cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
-                        {
-                            //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
-                            cellsList[newCellId].parentCellId = (*listToCheck.front()).cellId;
-                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
-                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
-                        }
+                        //deze cell is door de andere kant gevonden!
+                        collisionCell = *iterator;
+                        cellsList[*iterator].visited = true;
+                        cellsList[*iterator].visitedBack = true;
+                        cellsList[*iterator].parentCellId = (*listToCheck.front()).cellId;
+                    }
+
+                }
+                else
+                {
+                    //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
+                    if((*listToCheck.front()).cummulativeCost+1 < cellsList[*iterator].cummulativeCost)
+                    {
+                        //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
+                        cellsList[*iterator].parentCellId = (*listToCheck.front()).cellId;
+                        cellsList[*iterator].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
+                        cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
                     }
                 }
-                if((*listToCheckBack.front()).neighbours[q] != -1 && q != 8)
+            }
+
+            for (std::vector<int>::const_iterator iterator =  (*listToCheckBack.front()).neighbours.begin(), end =  (*listToCheckBack.front()).neighbours.end(); iterator != end; ++iterator)
+            {
+                //check if neighbours was found before
+                if(!cellsList[*iterator].visitedBack)
                 {
-                    //We have found neighbours!
-                    int newCellId = (*listToCheckBack.front()).neighbours[q];
-                    //check if neighbours was found before
-                    if(!cellsList[newCellId].visitedBack)
+                    if(!cellsList[*iterator].visited)
                     {
-                        if(!cellsList[newCellId].visited)
-                        {
-                            //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
-                            addNeighbours(newCellId, cellsList);
-                            //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
-                            cellsList[newCellId].backParent = (*listToCheckBack.front()).cellId;
-                            //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
-                            cellsList[newCellId].cummulativeCost = (*listToCheckBack.front()).cummulativeCost+1;
-                            //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
-                            listToCheckBack.push_back(&cellsList[newCellId]);
-                            //Bereken de afstand naar het doel
-                            cellsList[newCellId].costToGoal = dist(cellsList[newCellId].positionX,cellsList[newCellId].positionY,cellsList[startCell].positionX,cellsList[startCell].positionY);
-                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
-                            cellsList[newCellId].visitedBack = true;
-                        }
-                        else
-                        {
-                            //deze cell is door de andere kant gevonden!
-                            collisionCell = newCellId;
-                            cellsList[newCellId].visited = true;
-                            cellsList[newCellId].visitedBack = true;
-                            cellsList[newCellId].backParent = (*listToCheckBack.front()).cellId;
-                            q = 8;
-                        }
+                        //Deze cell heeft geen parent is is dus nooit eerder gevonden! De buren moeten dus toegevoegd worden!
+                        cellsList[*iterator].addNeighbours(cellsList);
+                        //De cell waarvan we de neighbours onderzoeken is dus automagisch tot nu toe de kortste route hiernaartoe
+                        cellsList[*iterator].backParent = (*listToCheckBack.front()).cellId;
+                        //Nu moeten de kosten voor de route hiernatoe uitgerekend worden (Dit zijn de kosten van naar de buurman gaan +1
+                        cellsList[*iterator].cummulativeCost = (*listToCheckBack.front()).cummulativeCost+1;
+                        //Als laatste zetten we de cell in de lijst met cellen die gecheckt moet worden
+                        listToCheckBack.push_back(&cellsList[*iterator]);
+                        //Bereken de afstand naar het doel
+                        cellsList[*iterator].costToGoal = dist(cellsList[*iterator].positionX,cellsList[*iterator].positionY,cellsList[startCell].positionX,cellsList[startCell].positionY);
+                        cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
+                        cellsList[*iterator].visitedBack = true;
                     }
                     else
                     {
-                        //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
-                        if((*listToCheck.front()).cummulativeCost+1 < cellsList[newCellId].cummulativeCost)
-                        {
-                            //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
-                            cellsList[newCellId].backParent = (*listToCheck.front()).cellId;
-                            cellsList[newCellId].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
-                            cellsList[newCellId].totalCostGuess = cellsList[newCellId].costToGoal + cellsList[newCellId].cummulativeCost;
-                        }
+                        //deze cell is door de andere kant gevonden!
+                        collisionCell = *iterator;
+                        cellsList[*iterator].visited = true;
+                        cellsList[*iterator].visitedBack = true;
+                        cellsList[*iterator].backParent = (*listToCheckBack.front()).cellId;
+                    }
+                }
+                else
+                {
+                    //Deze cell is al eerder gevonden, staat dus al in de te checken cell lijst
+                    if((*listToCheck.front()).cummulativeCost+1 < cellsList[*iterator].cummulativeCost)
+                    {
+                        //Er is een kortere route naar deze cell! Pas de parent cell dus aan en geef een nieuwe cummulative Cost;
+                        cellsList[*iterator].backParent = (*listToCheck.front()).cellId;
+                        cellsList[*iterator].cummulativeCost = (*listToCheck.front()).cummulativeCost+1;
+                        cellsList[*iterator].totalCostGuess = cellsList[*iterator].costToGoal + cellsList[*iterator].cummulativeCost;
                     }
                 }
             }
@@ -1789,7 +1729,7 @@ void actors::buildBuilding()
     {
         if(!listOfBuildings[currentGame.occupiedByBuildingList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].getCompleted())
         {
-            if(currentGame.elapsedTime - this->timeStartedGatheringRecource > 2)
+            if(currentGame.elapsedTime - this->timeStartedGatheringRecource > 1)
             {
                 listOfBuildings[currentGame.occupiedByBuildingList[this->gatheringResourcesAt[0]][this->gatheringResourcesAt[1]]].addBuildingPoint();
                 this->timeStartedGatheringRecource = currentGame.elapsedTime;

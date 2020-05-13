@@ -48,6 +48,11 @@ struct routeCell
     int backParent;
 };
 
+struct cords{
+    int x;
+    int y;
+};
+
 class actors
 {
 public:
@@ -70,6 +75,7 @@ public:
     void pathAStarBiDi();
     bool isInitialized();
     int getTeam();
+    cords getLocation();
     int getType();
     int getActorId();
     std::pair<int, int> getHealth();

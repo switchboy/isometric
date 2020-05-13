@@ -987,24 +987,38 @@ void gameState::interact()
                     {
                         for(int i = 0; i < this->selectedUnits.size(); i++)
                         {
-                            adjacentTile tempTile = listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile();
-                            if(tempTile.tileId != -1)
+                            std::list <nearestBuildingTile> listOfBuildLocations;
+                            std::vector<adjacentTile> tileList = listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].getFreeBuildingTile();
+                            for(int j = 0; j < tileList.size(); j++)
+                            {
+                                float tempDeltaDistance = dist(listOfActors[this->selectedUnits[i]].getLocation().x, listOfActors[this->selectedUnits[i]].getLocation().y, tileList[j].goalX, tileList[j].goalY);
+                                listOfBuildLocations.push_back({tempDeltaDistance, tileList[j].goalX, tileList[j].goalY, tileList[j].tileId, true});
+                            }
+                            if(!listOfBuildLocations.empty())
+                            {
+                                listOfBuildLocations.sort([](const nearestBuildingTile  &f, const nearestBuildingTile &s)
+                                {
+                                    return f.deltaDistance < s.deltaDistance;
+                                });
+                            }
+                            nearestBuildingTile tempTile = listOfBuildLocations.front();
+                            if(!tileList.empty())
                             {
                                 if(this->selectedUnits.size() > 1)
                                 {
                                     if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
                                     {
-                                        listOfActors[this->selectedUnits[i]].updateGoal(tempTile.goalX, tempTile.goalY, i/5);
+                                        listOfActors[this->selectedUnits[i]].updateGoal(tempTile.locationX, tempTile.locationY, i/5);
                                         listOfActors[this->selectedUnits[i]].setCommonGoalTrue();
-                                        listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(tempTile.tileId, listOfActors[this->selectedUnits[i]].getActorId());
+                                        listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(tempTile.buildingId, listOfActors[this->selectedUnits[i]].getActorId());
                                     }
                                 }
                                 else
                                 {
                                     if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())
                                     {
-                                        listOfActors[this->selectedUnits[i]].updateGoal(tempTile.goalX, tempTile.goalY, 0);
-                                        listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(tempTile.tileId, listOfActors[this->selectedUnits[i]].getActorId());
+                                        listOfActors[this->selectedUnits[i]].updateGoal(tempTile.locationX, tempTile.locationY, i/5);
+                                        listOfBuildings[this->occupiedByBuildingList[this->mouseWorldPosition.x][this->mouseWorldPosition.y]].claimFreeBuiildingTile(tempTile.buildingId, listOfActors[this->selectedUnits[i]].getActorId());
                                     }
                                 }
                                 if(listOfActors[this->selectedUnits[i]].getType() == 0 && listOfActors[this->selectedUnits[i]].getTeam() == currentPlayer.getTeam())

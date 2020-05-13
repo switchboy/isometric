@@ -62,20 +62,20 @@ void buildings::removeActorFromBuildingTile(int actorId)
 
 }
 
-adjacentTile buildings::getFreeBuildingTile()
+std::vector<adjacentTile> buildings::getFreeBuildingTile()
 {
+    std::vector<adjacentTile> tileList;
     for(int i = 0; i < this->adjacentTiles.size(); i++)
     {
         if(!this->adjacentTiles[i].occupied)
         {
             if(currentGame.isPassable(this->adjacentTiles[i].tileX, this->adjacentTiles[i].tileY))
             {
-                return this->adjacentTiles[i];
+                tileList.push_back(this->adjacentTiles[i]);
             }
         }
     }
-    //geen vrije tegel!
-    return {-1, -1, -1, -1, -1, false,-1};
+    return tileList;
 }
 
 

@@ -1169,6 +1169,9 @@ bool actors::findNearestSimilairResource()
     }
 }
 
+cords actors::getLocation(){
+    return {this->actorCords[0], this->actorCords[1]};
+}
 nearestBuildingTile actors::findNearestDropOffPoint(int Resource)
 {
     std::list <nearestBuildingTile> listOfDropOffLocations;

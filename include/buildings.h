@@ -54,7 +54,7 @@ public:
     std::pair<int, int>         getHealth();
     void                        addBuildingPoint();
     std::vector<adjacentTile>   getDropOffTiles();
-    adjacentTile                getFreeBuildingTile();
+    std::vector<adjacentTile>   getFreeBuildingTile();
     void                        claimFreeBuiildingTile(int id, int actorId);
     void                        removeActorFromBuildingTile(int actorId);
 
